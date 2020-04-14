@@ -12,12 +12,15 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
+@SuppressWarnings("Duplicates")
 @CrossOrigin
 @RestController
 @RequestMapping(path="/user")
 public class UserEntityController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserEntityController.class);
+
+    String role = "USER";
 
     @Autowired
     private UserService userService;
@@ -30,7 +33,7 @@ public class UserEntityController {
      */
     @GetMapping("/")
     public Object getAllUsers() {
-        List<UserEntity> userEntities = userService.getAllActiveUsers(SecurityContextHolder.getContext().getAuthentication());
+        List<UserEntity> userEntities = userService.getAllActiveUsersByRole(role, SecurityContextHolder.getContext().getAuthentication());
         if (userEntities == null || userEntities.isEmpty()) {
             return new ResponseEntity(HttpStatus.NO_CONTENT);
         }
@@ -43,9 +46,9 @@ public class UserEntityController {
     @GetMapping("/{id}")
     public ResponseEntity<UserEntity> getUserById(@PathVariable Long id) {
         logger.info("Fetching UserEntity with id {}", id);
-        Optional<UserEntity> user = userService.getUserById(id);
+        Optional<UserEntity> user = userService.getUserByRoleAndId(role, id);
         if (!user.isPresent()) {
-            logger.error("UserEntity with id {} not found.", id);
+            logger.error("UserEntity with id {} and role {} not found.", id, role);
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
@@ -56,27 +59,27 @@ public class UserEntityController {
 
     @PostMapping("/")
     public UserEntity addUser(@RequestBody UserEntity userEntity) {
-        return userService.addUser(userEntity);
+        return userService.addUser(role, userEntity);
     }
 
     @PutMapping("/{id}")
     public UserEntity updateUser(@RequestBody UserEntity userEntity, @PathVariable Long id) {
-        return userService.updateUser(id, userEntity);
+        return userService.updateUser(role, id, userEntity);
     }
 
     @PutMapping("/changePassword/{id}")
     public UserEntity updateUserPassword(@RequestBody UserEntity userEntity, @PathVariable Long id) {
-        return userService.updatePassword(id, userEntity);
+        return userService.updatePassword(role, id, userEntity);
     }
 
     @PutMapping("/changeRole/{id}")
     public UserEntity updateUserRole(@RequestBody UserEntity userEntity, @PathVariable Long id) {
-        return userService.updateRole(id, userEntity);
+        return userService.updateRole(role, id, userEntity);
     }
 
     @DeleteMapping("/{id}")
     public void deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
+        userService.deleteUser(role, id);
     }
 
     @GetMapping("/verify")

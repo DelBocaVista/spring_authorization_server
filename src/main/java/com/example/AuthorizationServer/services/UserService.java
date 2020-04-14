@@ -5,6 +5,7 @@ import com.example.AuthorizationServer.repositories.UserEntityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.common.exceptions.UnauthorizedUserException;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -19,27 +20,42 @@ public class UserService {
     private UserEntityRepository userEntityRepository;
 
     public UserEntity getUserByUsername(String username) {
-        List<UserEntity> test = userEntityRepository.findByUsernameAndEnabled(username, true);
+        List<UserEntity> test = userEntityRepository.findByUsernameAndEnabled(username,true);
         System.out.println(test.size());
         return test.get(0);
     }
 
-    public Optional<UserEntity> getUserById(Long id) {
-        return userEntityRepository.findById(id);
+    public UserEntity getUserByRoleAndUsername(String role, String username) {
+        List<UserEntity> test = userEntityRepository.findByUsernameAndRoleAndEnabled(username, role, true);
+        System.out.println(test.size());
+        return test.get(0);
     }
 
-    public List<UserEntity> getAllActiveUsers(Authentication auth) {
-        return userEntityRepository.findAllByEnabled(true);
+    public Optional<UserEntity> getUserByRoleAndId(String role, Long id) {
+        return userEntityRepository.findByRoleAndId(role, id);
     }
 
+    public List<UserEntity> getAllActiveUsersByRole(String role, Authentication auth) {
+        return userEntityRepository.findAllByRoleAndEnabled(role, true);
+    }
+
+    public UserEntity addUser(String role, UserEntity userEntity) {
+        if (!userEntity.getRole().equals(role))
+            throw new UnauthorizedUserException("Not authorized to create a new user with this role");
+        System.out.println("koll:" + userEntity.toString());
+        userEntity.setPassword(new BCryptPasswordEncoder().encode(userEntity.getPassword()));
+        return userEntityRepository.save(userEntity);
+    }
+
+    // Only for seeding purposes - find better solution or remove later!!
     public UserEntity addUser(UserEntity userEntity) {
         System.out.println("koll:" + userEntity.toString());
         userEntity.setPassword(new BCryptPasswordEncoder().encode(userEntity.getPassword()));
         return userEntityRepository.save(userEntity);
     }
 
-    public UserEntity updateUser(Long id, UserEntity userEntity) {
-        Optional<UserEntity> optionalUser = userEntityRepository.findById(id);
+    public UserEntity updateUser(String role, Long id, UserEntity userEntity) {
+        Optional<UserEntity> optionalUser = userEntityRepository.findByRoleAndId(role, id);
         if (!optionalUser.isPresent())
             throw new NoSuchElementException(); // ?
         UserEntity updatedUserEntity = optionalUser.get();
@@ -50,12 +66,12 @@ public class UserService {
         return userEntityRepository.save(updatedUserEntity);
     }
 
-    public void deleteUser(Long id) {
-        userEntityRepository.deleteById(id);
+    public void deleteUser(String role, Long id) {
+        userEntityRepository.deleteByRoleAndId(role, id);
     }
 
-    public UserEntity updatePassword(Long id, UserEntity userEntityRecord) {
-        Optional<UserEntity> optionalUser = userEntityRepository.findById(id);
+    public UserEntity updatePassword(String role, Long id, UserEntity userEntityRecord) {
+        Optional<UserEntity> optionalUser = userEntityRepository.findByRoleAndId(role, id);
         if (!optionalUser.isPresent())
             throw new NoSuchElementException(); // ?
         UserEntity updatedUserEntity = optionalUser.get();
@@ -63,8 +79,8 @@ public class UserService {
         return userEntityRepository.save(updatedUserEntity);
     }
 
-    public UserEntity updateRole(Long id, UserEntity userEntity) {
-        Optional<UserEntity> optionalUser = userEntityRepository.findById(id);
+    public UserEntity updateRole(String role, Long id, UserEntity userEntity) {
+        Optional<UserEntity> optionalUser = userEntityRepository.findByRoleAndId(role, id);
         if (!optionalUser.isPresent())
             throw new NoSuchElementException(); // ?
         UserEntity updatedUserEntity = optionalUser.get();
