@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.Optional;
 
 @SuppressWarnings("Duplicates")
-@CrossOrigin
 @RestController
+//@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RequestMapping(path="/admin")
 public class AdminController {
 
@@ -29,6 +29,9 @@ public class AdminController {
     // @Autowired
     // private OrganizationInfoService orgService;
 
+    /*
+        Get all admins
+     */
     @GetMapping("/")
     public Object getAllAdmins() {
         List<UserEntity> userEntities = userService.getAllActiveUsersByRole(role, SecurityContextHolder.getContext().getAuthentication());
@@ -39,4 +42,45 @@ public class AdminController {
     }
 
     // ADD MORE FUNTIONALITY HERE!!
+    /*
+        Get single student by id
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<UserEntity> getAdminById(@PathVariable Long id) {
+        logger.info("Fetching UserEntity with id {} and role ADMIN", id);
+        Optional<UserEntity> user = userService.getUserByRoleAndId(role, id);
+        if (!user.isPresent()) {
+            logger.error("UserEntity with id {} and role {} not found.", id, role);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        // UserDto userDto = convertToDto(user.get());
+
+        return new ResponseEntity<>(user.get(), HttpStatus.OK); // Change this later (user.get())
+    }
+
+    @PostMapping("/")
+    public UserEntity addUser(@RequestBody UserEntity userEntity) {
+        return userService.addUser(role, userEntity);
+    }
+
+    @PutMapping("/{id}")
+    public UserEntity updateUser(@RequestBody UserEntity userEntity, @PathVariable Long id) {
+        return userService.updateUser(role, id, userEntity);
+    }
+
+    @PutMapping("/changePassword/{id}")
+    public UserEntity updateUserPassword(@RequestBody UserEntity userEntity, @PathVariable Long id) {
+        return userService.updatePassword(role, id, userEntity);
+    }
+
+    @PutMapping("/changeRole/{id}")
+    public UserEntity updateUserRole(@RequestBody UserEntity userEntity, @PathVariable Long id) {
+        return userService.updateRole(role, id, userEntity);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteUser(@PathVariable Long id) {
+        userService.deleteUser(role, id);
+    }
 }

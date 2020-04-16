@@ -56,11 +56,16 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
-        config.applyPermitDefaultValues();
+        //config.applyPermitDefaultValues();
+        config.setAllowCredentials(true);
+        config.addAllowedOrigin("*");
+        config.addAllowedHeader("*");
+        config.addAllowedMethod("*");
 
         // ADDED THIS TO ALLOW CORS!!!!
 
-        source.registerCorsConfiguration("/oauth/token", config);
+        //source.registerCorsConfiguration("/oauth/token", config);
+        source.registerCorsConfiguration("/**", config);
         CorsFilter filter = new CorsFilter(source);
         oauthServer.addTokenEndpointAuthenticationFilter(filter);
     }

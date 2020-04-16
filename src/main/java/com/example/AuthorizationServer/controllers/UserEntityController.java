@@ -29,7 +29,7 @@ public class UserEntityController {
     // private OrganizationInfoService orgService;
 
     /*
-        Get all user
+        Get all users
      */
     @GetMapping("/")
     public Object getAllUsers() {
