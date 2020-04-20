@@ -54,12 +54,15 @@ public class UserService {
         return userEntityRepository.save(userEntity);
     }
 
+    // Rewrite this with if checks to see what parameters are supposed to be updated?
     public UserEntity updateUser(String role, Long id, UserEntity userEntity) {
         Optional<UserEntity> optionalUser = userEntityRepository.findByRoleAndId(role, id);
         if (!optionalUser.isPresent())
             throw new NoSuchElementException(); // ?
         UserEntity updatedUserEntity = optionalUser.get();
         updatedUserEntity.setUsername(userEntity.getUsername());
+        updatedUserEntity.setFirstname(userEntity.getFirstname());
+        updatedUserEntity.setLastname(userEntity.getLastname());
         updatedUserEntity.setPassword(userEntity.getPassword());
         updatedUserEntity.setRole(userEntity.getRole());
         updatedUserEntity.setEnabled(userEntity.getEnabled());
