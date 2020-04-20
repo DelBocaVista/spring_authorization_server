@@ -5,22 +5,23 @@ import com.example.AuthorizationServer.services.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import java.util.*;
+
+import java.util.List;
+import java.util.Optional;
 
 @SuppressWarnings("Duplicates")
-@CrossOrigin
 @RestController
-@RequestMapping(path="/user")
-public class UserEntityController {
+//@CrossOrigin(origins = "*", allowedHeaders = "*")
+@RequestMapping(path="/admin")
+public class AdminController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserEntityController.class);
 
-    String role = "USER";
+    String role = "ADMIN";
 
     @Autowired
     private UserService userService;
@@ -29,10 +30,10 @@ public class UserEntityController {
     // private OrganizationInfoService orgService;
 
     /*
-        Get all users
+        Get all admins
      */
     @GetMapping("/")
-    public Object getAllUsers() {
+    public Object getAllAdmins() {
         List<UserEntity> userEntities = userService.getAllActiveUsersByRole(role, SecurityContextHolder.getContext().getAuthentication());
         if (userEntities == null || userEntities.isEmpty()) {
             return new ResponseEntity(HttpStatus.NO_CONTENT);
@@ -40,12 +41,13 @@ public class UserEntityController {
         return new ResponseEntity<>(userEntities, HttpStatus.OK);
     }
 
+    // ADD MORE FUNTIONALITY HERE!!
     /*
         Get single student by id
      */
     @GetMapping("/{id}")
-    public ResponseEntity<UserEntity> getUserById(@PathVariable Long id) {
-        logger.info("Fetching UserEntity with id {}", id);
+    public ResponseEntity<UserEntity> getAdminById(@PathVariable Long id) {
+        logger.info("Fetching UserEntity with id {} and role ADMIN", id);
         Optional<UserEntity> user = userService.getUserByRoleAndId(role, id);
         if (!user.isPresent()) {
             logger.error("UserEntity with id {} and role {} not found.", id, role);
@@ -81,52 +83,4 @@ public class UserEntityController {
     public void deleteUser(@PathVariable Long id) {
         userService.deleteUser(role, id);
     }
-
-    @GetMapping("/verify")
-    public @ResponseBody boolean verifyToken(){
-        return true;
-    }
-    /*@GetMapping(path="/org/{id}")
-    @ResponseBody
-    public ResponseEntity<?> findAllByOrgId(@PathVariable Long id) {
-        Organization org = new Organization();
-        org.setId(Long.valueOf(id));
-        Collection<UserEntity> users = (Collection<UserEntity>) userRepository.findByOrganization(org);
-
-        if (users.isEmpty()) {
-            return new ResponseEntity(HttpStatus.NOT_FOUND);
-        }
-
-        /* ArrayList<UserDto> usersDto = new ArrayList<>();
-
-        for (UserEntity u : users) {
-            UserDto userDto = convertToDto(u);
-            usersDto.add(userDto);
-        }*/
-
-        // return new ResponseEntity<Collection<UserDto>>(usersDTO, HttpStatus.OK);
-        // return new ResponseEntity<>(users, HttpStatus.OK);
-    // }
-
-    /*
-    private UserDto convertToDto(UserEntity user) {
-        UserDto studentDto = modelMapper.map(user, UserDto.class);
-
-        // Do something..
-        studentDto.setImageId(student.getImage().getId());
-        studentDto.setImagageType(student.getImage().getFileType());
-
-        return studentDto;
-    }
-
-    private UserEntity convertToEntity(UserDto userDto) throws ParseException {
-        UserEntity newUser = modelMapper.map(userDto, UserEntity.class);
-        Optional<UserEntity> user = userRepository.findById(userDto.getId());
-        if(!user.isPresent())
-            return null;
-
-        return user.get();
-    }
-    */
-
 }

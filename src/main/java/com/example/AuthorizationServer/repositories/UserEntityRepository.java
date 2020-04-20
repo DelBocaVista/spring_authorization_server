@@ -14,9 +14,19 @@ public interface UserEntityRepository extends CrudRepository<UserEntity, String>
 
     List<UserEntity> findByUsernameAndEnabled(String userName, boolean enabled);
 
-    List<UserEntity> findAllByEnabled(boolean enabled);
+    /*List<UserEntity> findAllByEnabled(boolean enabled);
 
     Optional<UserEntity> findById(Long id);
 
-    void deleteById(Long id);
+    void deleteById(Long id);*/
+
+    // Extended handling
+
+    List<UserEntity> findByUsernameAndRoleAndEnabled(String userName, String role, boolean enabled);
+
+    List<UserEntity> findAllByRoleAndEnabled(String role, boolean enabled);
+
+    Optional<UserEntity> findByRoleAndId(String role, Long id);
+
+    void deleteByRoleAndId(String role, Long id);
 }

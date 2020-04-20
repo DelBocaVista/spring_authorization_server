@@ -56,11 +56,16 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
-        config.applyPermitDefaultValues();
+        //config.applyPermitDefaultValues();
+        config.setAllowCredentials(true);
+        config.addAllowedOrigin("*");
+        config.addAllowedHeader("*");
+        config.addAllowedMethod("*");
 
         // ADDED THIS TO ALLOW CORS!!!!
 
-        source.registerCorsConfiguration("/oauth/token", config);
+        //source.registerCorsConfiguration("/oauth/token", config);
+        source.registerCorsConfiguration("/**", config);
         CorsFilter filter = new CorsFilter(source);
         oauthServer.addTokenEndpointAuthenticationFilter(filter);
     }
@@ -70,7 +75,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
         clients.inMemory()
                 .withClient("fooClientId").secret(bCryptPasswordEncoder.encode("secret"))
                 .authorizedGrantTypes("password", "authorization_code", "refresh_token").scopes("read","write")
-                .authorities("ROLE_CLIENT", "ROLE_TRUSTED_CLIENT", "USER","ADMIN")
+                .authorities("USER","ADMIN","SUPERADMIN")
                 .autoApprove(true)
                 .accessTokenValiditySeconds(180)//Access token is only valid for 3 minutes.
                 .refreshTokenValiditySeconds(600);//Refresh token is only valid for 10 minutes.;

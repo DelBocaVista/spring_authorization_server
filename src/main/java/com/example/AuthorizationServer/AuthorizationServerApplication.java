@@ -22,20 +22,27 @@ public class AuthorizationServerApplication {
 	InitializingBean seedDatabase() {
 
 		UserEntity u1 = new UserEntity();
-		u1.setUsername("superadmin");
-		u1.setRole("ADMIN");
+		u1.setUsername("sudo");
+		u1.setRole("SUPERADMIN");
 		u1.setEnabled(true);
-		u1.setPassword("test");
+		u1.setPassword("sudo");
 
 		UserEntity u2 = new UserEntity();
-		u2.setUsername("jonas");
-		u2.setRole("USER");
+		u2.setUsername("admin");
+		u2.setRole("ADMIN");
 		u2.setEnabled(true);
-		u2.setPassword("jonas");
+		u2.setPassword("admin");
+
+		UserEntity u3 = new UserEntity();
+		u3.setUsername("jonas");
+		u3.setRole("USER");
+		u3.setEnabled(true);
+		u3.setPassword("jonas");
 
 		return () -> {
 			userService.addUser(u1);
 			userService.addUser(u2);
+			userService.addUser(u3);
 		};
 	}
 }

@@ -19,9 +19,11 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
     @Override
     public void configure(HttpSecurity http) throws Exception {
         http
+                .cors()
+                    .and()
                 .authorizeRequests()
-                .antMatchers("/user/*")
-                .hasAuthority("ADMIN")
+                    .antMatchers("/user/**").hasAuthority("ADMIN")
+                    .antMatchers("/admin/**").hasAuthority("SUPERADMIN")
                 .anyRequest().authenticated();
     }
 }
