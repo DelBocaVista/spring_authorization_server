@@ -1,3 +1,3 @@
-docker image build -t photolog_backend .
+docker image build -t roombooking_authserver .
 
-docker container run -p 8081:8080 -d photolog_backend
+docker container run -p 8081:8080 -d roombooking_authserver
