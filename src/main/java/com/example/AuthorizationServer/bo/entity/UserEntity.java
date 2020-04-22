@@ -3,6 +3,12 @@ package com.example.AuthorizationServer.bo.entity;
 import javax.persistence.*;
 import java.io.Serializable;
 
+/**
+ * @author Jonas Lundvall (jonlundv@kth.se)
+ *
+ * Represents a User of the booking system. The name UserEntity is used instead of User due to a naming conflict with
+ * the UserDetailsService class User
+ */
 @Entity
 @Table(name = "user")
 public class UserEntity implements Serializable {

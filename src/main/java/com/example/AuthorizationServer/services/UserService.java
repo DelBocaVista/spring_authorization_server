@@ -12,6 +12,11 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
+/**
+ * @author Jonas Lundvall (jonlundv@kth.se)
+ *
+ * Service for handling retrieving, saving and updating user entitys
+ */
 @Repository // Remove?
 @Transactional // Remove?
 public class UserService {
@@ -20,15 +25,13 @@ public class UserService {
     private UserEntityRepository userEntityRepository;
 
     public UserEntity getUserByUsername(String username) {
-        List<UserEntity> test = userEntityRepository.findByUsernameAndEnabled(username,true);
-        System.out.println(test.size());
-        return test.get(0);
+        UserEntity user = userEntityRepository.findByUsernameAndEnabled(username,true);
+        return user;
     }
 
     public UserEntity getUserByRoleAndUsername(String role, String username) {
-        List<UserEntity> test = userEntityRepository.findByUsernameAndRoleAndEnabled(username, role, true);
-        System.out.println(test.size());
-        return test.get(0);
+        UserEntity user = userEntityRepository.findByUsernameAndRoleAndEnabled(username, role, true);
+        return user;
     }
 
     public Optional<UserEntity> getUserByRoleAndId(String role, Long id) {
