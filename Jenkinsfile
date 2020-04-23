@@ -2,7 +2,7 @@ node {
     	stage ('Build') {
     		checkout scm
     		sh './mvnw -B -DskipTests clean package'
-    		docker.build("authserver").push()
+    		docker.build("authserver")
 		}
 		stage ('Docker') {
             steps {
