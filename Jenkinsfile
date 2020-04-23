@@ -12,6 +12,7 @@ node {
                 sh 'docker-compose up --no-deps --build -d'
             }
         }
+    }
 }
 
 /*node {
