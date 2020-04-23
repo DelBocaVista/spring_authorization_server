@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  rest-blogposts:
+    container_name: authserver
+    build: .
+    environment:
+    ports:
+      - "8080:8080"
+    network_mode:
