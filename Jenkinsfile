@@ -5,11 +5,9 @@ node {
     		docker.build("authserver")
 		}
 		stage ('Docker') {
-            steps {
-                echo 'Building docker container'
-                sh 'docker-compose down'
-                sh 'docker-compose up --no-deps --build -d'
-            }
+            echo 'Building docker container'
+            sh 'docker-compose down'
+            sh 'docker-compose up --no-deps --build -d'
         }
 }
 
