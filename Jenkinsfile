@@ -1,5 +1,4 @@
 node {
-    stages {
     	stage ('Build') {
     		checkout scm
     		sh './mvnw -B -DskipTests clean package'
@@ -12,7 +11,6 @@ node {
                 sh 'docker-compose up --no-deps --build -d'
             }
         }
-    }
 }
 
 /*node {
