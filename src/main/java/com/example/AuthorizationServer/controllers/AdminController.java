@@ -31,7 +31,7 @@ public class AdminController {
     private UserService userService;
 
     // @Autowired
-    // private OrganizationInfoService orgService;
+    // private OrganizationService orgService;
 
     /*
         Get all admins

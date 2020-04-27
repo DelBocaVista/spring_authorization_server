@@ -29,7 +29,7 @@ public class UserController {
     private UserService userService;
 
     // @Autowired
-    // private OrganizationInfoService orgService;
+    // private OrganizationService orgService;
 
     /**
      * Retrieve all user entities with role USER

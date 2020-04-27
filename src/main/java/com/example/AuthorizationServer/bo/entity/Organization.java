@@ -28,6 +28,9 @@ public class Organization implements Serializable {
     @Column(name="org_name")
     private String name;
 
+    @Column(name="org_path")
+    private String path;
+
     @Column(name="org_enabled", nullable = false)
     private Boolean enabled;
 
@@ -40,6 +43,9 @@ public class Organization implements Serializable {
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+
+    public String getPath() { return this.path; }
+    public void setPath(String path) { this.path = path; }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -60,8 +66,9 @@ public class Organization implements Serializable {
         this.enabled = true;
     }
 
-    public Organization(String name) {
+    public Organization(String name, String path) {
         this.name = name;
+        this.path = path;
         this.enabled = true;
     }
 
