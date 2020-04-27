@@ -21,9 +21,20 @@ public interface OrganizationRepository extends CrudRepository<Organization, Str
 
     List<Organization> findAll();
 
+    List<Organization> findByPathEndsWith(String id);
+
+    List<Organization> findByPathStartsWith(String id);
+
     @Query("SELECT path FROM Organization WHERE id =:id")
     String getPath(@Param("id") Long id);
 
     @Query("SELECT name FROM Organization WHERE id =:id")
     String getName(@Param("id") Long id);
+
+   /* @Query(
+            "SELECT e1.ename FROM emp e1, emp e2
+            where e2.path LIKE e1.path || '%'
+            and e2.name = 'FORD'"
+    )
+    List<Organization> getParents(@Param("id") Long id);*/
 }

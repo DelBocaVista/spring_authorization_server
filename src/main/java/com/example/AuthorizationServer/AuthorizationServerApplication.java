@@ -11,6 +11,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 @SpringBootApplication
@@ -69,10 +71,44 @@ public class AuthorizationServerApplication {
 			userService.addUser(u2);
 			userService.addUser(u3);
 			//orgService.addOrganization(o1);
-			Organization test = o.findByName("KTH");
-			System.out.println("test: " + test.getName());
 
-			List<Organization> res = o.findAll();
+			Organization o2 = new Organization();
+			o2.setName("STH");
+			o2.setEnabled(true);
+
+			Organization o3 = new Organization();
+			o3.setName("SCI");
+			o3.setEnabled(true);
+
+			Organization o4 = new Organization();
+			o4.setName("CBH");
+			o4.setEnabled(true);
+
+			Organization o5 = new Organization();
+			o5.setName("Doktorander");
+			o5.setEnabled(true);
+
+			Organization o1new = o.findByName("KTH");
+
+			orgService.addOrganization(o2);
+			orgService.addOrganization(o3);
+			orgService.addOrganization(o4);
+			orgService.addOrganization(o5);
+
+			orgService.addParentToOrganization(o2,o1);
+			orgService.addParentToOrganization(o3,o1);
+			orgService.addParentToOrganization(o4,o1);
+			orgService.addParentToOrganization(o5,o2);
+
+			Organization o2new = o.findByName("STH");
+
+			System.out.println("test: " + o1new.getName() + " " + o1new.getPath());
+
+			System.out.println("Chi");
+			List<Organization> res = orgService.getAllChildrenOfOrganization(o1);
+			for (Organization o:res) {
+				System.out.println(o.getName());
+			}
 			System.out.println("res: " + res.get(0).getPath());
 
 			String name = o.getName(1L);

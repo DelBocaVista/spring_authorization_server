@@ -25,7 +25,7 @@ public class Organization implements Serializable {
     @OneToMany(mappedBy = "organization", cascade=CascadeType.ALL)
     private Set<UserEntity> userEntities = new HashSet<>();
 
-    @Column(name="org_name")
+    @Column(name="org_name", unique = true)
     private String name;
 
     @Column(name="org_path")
@@ -52,6 +52,7 @@ public class Organization implements Serializable {
 
     // Constructors -------------------------------------------------------------------------------
     public Organization() {
+        this.path = "";
     }
 
     public Organization(Set<UserEntity> userEntities, String name, Boolean enabled) {
@@ -66,13 +67,20 @@ public class Organization implements Serializable {
         this.enabled = true;
     }
 
-    public Organization(String name, String path) {
+    public Organization(String name, Organization parent) {
         this.name = name;
-        this.path = path;
+        this.path = parent.path + "." + getId();
         this.enabled = true;
     }
 
     public void addUser(UserEntity userEntity) {
         userEntities.add(userEntity);
+    }
+
+    public void setParent(Organization org) {
+        if(org.getPath().equals(""))
+            this.setPath(this.getId().toString());
+        else
+            this.setPath(org.path + "." + this.getId());
     }
 }
