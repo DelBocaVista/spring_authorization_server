@@ -23,21 +23,27 @@ public class AuthorizationServerApplication {
 
 		UserEntity u1 = new UserEntity();
 		u1.setUsername("sudo");
+		u1.setFirstname("Sudo");
+		u1.setLastname("McSudo");
 		u1.setRole("SUPERADMIN");
 		u1.setEnabled(true);
 		u1.setPassword("sudo");
 
 		UserEntity u2 = new UserEntity();
 		u2.setUsername("admin");
+		u2.setFirstname("Admin");
+		u2.setLastname("McAdmin");
 		u2.setRole("ADMIN");
 		u2.setEnabled(true);
 		u2.setPassword("admin");
 
 		UserEntity u3 = new UserEntity();
-		u3.setUsername("jonas");
+		u3.setUsername("user");
+		u3.setFirstname("User");
+		u3.setLastname("McUser");
 		u3.setRole("USER");
 		u3.setEnabled(true);
-		u3.setPassword("jonas");
+		u3.setPassword("user");
 
 		return () -> {
 			userService.addUser(u1);

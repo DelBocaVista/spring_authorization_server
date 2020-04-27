@@ -13,13 +13,17 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * @author Jonas Lundvall (jonlundv@kth.se)
+ *
+ * Controller for REST API requests for UserEntity with role ADMIN
+ */
 @SuppressWarnings("Duplicates")
 @RestController
-//@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RequestMapping(path="/admin")
 public class AdminController {
 
-    private static final Logger logger = LoggerFactory.getLogger(UserEntityController.class);
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
     String role = "ADMIN";
 

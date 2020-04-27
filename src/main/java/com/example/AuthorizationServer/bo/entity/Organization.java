@@ -5,6 +5,11 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * @author Jonas Lundvall (jonlundv@kth.se)
+ *
+ * Represents an Organization in the booking system to which Users and Rooms can belong
+ */
 @Entity
 @Table(name = "organizations")
 public class Organization implements Serializable {

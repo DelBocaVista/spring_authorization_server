@@ -77,8 +77,8 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
                 .authorizedGrantTypes("password", "authorization_code", "refresh_token").scopes("read","write")
                 .authorities("USER","ADMIN","SUPERADMIN")
                 .autoApprove(true)
-                .accessTokenValiditySeconds(180)//Access token is only valid for 3 minutes.
-                .refreshTokenValiditySeconds(600);//Refresh token is only valid for 10 minutes.;
+                .accessTokenValiditySeconds(180)//Access token is valid for 3 minutes.
+                .refreshTokenValiditySeconds(600);//Refresh token is valid for 10 minutes.;
     }
 
     @Override

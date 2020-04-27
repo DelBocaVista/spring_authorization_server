@@ -22,6 +22,9 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
         UserEntity userEntity = userService.getUserByUsername(userName);
         GrantedAuthority authority = new SimpleGrantedAuthority(userEntity.getRole());
-        return new User(userEntity.getUsername(), userEntity.getPassword(), Arrays.asList(authority)); // Only one authority but constructor requires Collection.
+
+        // The room booking system only uses one authority per user entity but constructor for class
+        // org.springframework.security.core.userdetails.User requires Collection.
+        return new User(userEntity.getUsername(), userEntity.getPassword(), Arrays.asList(authority));
     }
 }

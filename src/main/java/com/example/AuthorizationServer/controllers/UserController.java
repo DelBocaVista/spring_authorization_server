@@ -5,20 +5,23 @@ import com.example.AuthorizationServer.services.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
+/**
+ * @author Jonas Lundvall (jonlundv@kth.se), Gustav Kavtaradze (guek@kth.se)
+ *
+ * Controller for REST API requests for user entities with role USER
+ */
 @SuppressWarnings("Duplicates")
-@CrossOrigin
 @RestController
 @RequestMapping(path="/user")
-public class UserEntityController {
+public class UserController {
 
-    private static final Logger logger = LoggerFactory.getLogger(UserEntityController.class);
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
     String role = "USER";
 
@@ -28,8 +31,10 @@ public class UserEntityController {
     // @Autowired
     // private OrganizationInfoService orgService;
 
-    /*
-        Get all users
+    /**
+     * Retrieve all user entities with role USER
+     *
+     * @return the response entity
      */
     @GetMapping("/")
     public Object getAllUsers() {
@@ -40,8 +45,11 @@ public class UserEntityController {
         return new ResponseEntity<>(userEntities, HttpStatus.OK);
     }
 
-    /*
-        Get single student by id
+    /**
+     * Get a single user entity with role USER by id
+     *
+     * @param id the user entity id
+     * @return the response entity
      */
     @GetMapping("/{id}")
     public ResponseEntity<UserEntity> getUserById(@PathVariable Long id) {
@@ -57,31 +65,68 @@ public class UserEntityController {
         return new ResponseEntity<>(user.get(), HttpStatus.OK); // Change this later (user.get())
     }
 
+    /**
+     * Create a user entity with role USER
+     *
+     * @param userEntity the user entity to be created
+     * @return the response entity
+     */
     @PostMapping("/")
     public UserEntity addUser(@RequestBody UserEntity userEntity) {
         return userService.addUser(role, userEntity);
     }
 
+    /**
+     * Update a user entity with role USER
+     *
+     * @param userEntity the new version of the user entity
+     * @param id the id of the user entity to be updated
+     * @return the response entity
+     */
     @PutMapping("/{id}")
     public UserEntity updateUser(@RequestBody UserEntity userEntity, @PathVariable Long id) {
         return userService.updateUser(role, id, userEntity);
     }
 
+    /**
+     * Change password for a user entity with role USER
+     *
+     * @param userEntity the user entity with updated password
+     * @param id the id of the user entity to be updated
+     * @return the response entity
+     */
     @PutMapping("/changePassword/{id}")
     public UserEntity updateUserPassword(@RequestBody UserEntity userEntity, @PathVariable Long id) {
         return userService.updatePassword(role, id, userEntity);
     }
 
+    // Remove this later?!
+    /**
+     * Change role of a user entity with current role USER
+     *
+     * @param userEntity the user entity with updated role
+     * @param id the id of the user entity to be updated
+     * @return the response entity
+     */
     @PutMapping("/changeRole/{id}")
     public UserEntity updateUserRole(@RequestBody UserEntity userEntity, @PathVariable Long id) {
         return userService.updateRole(role, id, userEntity);
     }
 
+    // Remove this later?!
+    /**
+     * Delete a user entity with role USER
+     *
+     * @param id the id of the user entity to be deleted
+     */
     @DeleteMapping("/{id}")
     public void deleteUser(@PathVariable Long id) {
         userService.deleteUser(role, id);
     }
 
+    /**
+     * Verify that the used access token has authority to reach the /user request mapping
+     */
     @GetMapping("/verify")
     public @ResponseBody boolean verifyToken(){
         return true;
