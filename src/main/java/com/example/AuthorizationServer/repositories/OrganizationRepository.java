@@ -2,6 +2,7 @@ package com.example.AuthorizationServer.repositories;
 
 import com.example.AuthorizationServer.bo.entity.Organization;
 import com.example.AuthorizationServer.bo.entity.UserEntity;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -15,15 +16,19 @@ import java.util.Optional;
 @Transactional
 public interface OrganizationRepository extends CrudRepository<Organization, String>, OrganizationRepositoryCustom {
 
-    Organization findById(Long id);
+    Optional<Organization> findById(Long id);
 
-    Organization findByName(String name);
+    Optional<Organization> findByName(String name);
 
-    List<Organization> findAll();
+    List<Organization> findAllByOrderByPathAsc();
 
     List<Organization> findByPathEndsWith(String id);
 
     List<Organization> findByPathStartsWith(String id);
+
+    List<Organization> findByPathContains(String id);
+
+    void deleteById(Long id);
 
     @Query("SELECT path FROM Organization WHERE id =:id")
     String getPath(@Param("id") Long id);

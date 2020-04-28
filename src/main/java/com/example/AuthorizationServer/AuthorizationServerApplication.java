@@ -88,7 +88,7 @@ public class AuthorizationServerApplication {
 			o5.setName("Doktorander");
 			o5.setEnabled(true);
 
-			Organization o1new = o.findByName("KTH");
+			//Organization o1new = o.findByName("KTH");
 
 			orgService.addOrganization(o2);
 			orgService.addOrganization(o3);
@@ -100,19 +100,78 @@ public class AuthorizationServerApplication {
 			orgService.addParentToOrganization(o4,o1);
 			orgService.addParentToOrganization(o5,o2);
 
-			Organization o2new = o.findByName("STH");
-
-			System.out.println("test: " + o1new.getName() + " " + o1new.getPath());
-
-			System.out.println("Chi");
+			System.out.println("Children");
 			List<Organization> res = orgService.getAllChildrenOfOrganization(o1);
 			for (Organization o:res) {
 				System.out.println(o.getName());
 			}
-			System.out.println("res: " + res.get(0).getPath());
 
-			String name = o.getName(1L);
-			System.out.println("name: " + name);
+            Organization o6 = new Organization();
+            o6.setName("Lorem");
+            o6.setEnabled(true);
+
+            Organization o7 = new Organization();
+            o7.setName("Ipsum");
+            o7.setEnabled(true);
+
+            Organization o8 = new Organization();
+            o8.setName("Dolor");
+            o8.setEnabled(true);
+
+            Organization o9 = new Organization();
+            o9.setName("Frans");
+            o9.setEnabled(true);
+
+            orgService.addOrganization(o6);
+            orgService.addOrganization(o7);
+            orgService.addOrganization(o8);
+            orgService.addOrganization(o9);
+
+            orgService.addParentToOrganization(o7,o6);
+            orgService.addParentToOrganization(o8,o6);
+            orgService.addParentToOrganization(o9,o7);
+
+            System.out.println("Get All");
+			res = orgService.getAll();
+
+            System.out.println(orgService.prettyPrint(res));
+
+            System.out.println("Get All Children of 1"); // NEED TO ADD SORTING?
+            Organization org = orgService.getOrganizationById(1L);
+            res = orgService.getAllChildrenOfOrganization(org);
+
+            System.out.println(orgService.prettyPrint(res));
+
+            System.out.println("Get Direct Children of 1"); // NEED TO ADD SORTING?
+            res = orgService.getDirectChildrenOfOrganization(org);
+
+            System.out.println(orgService.prettyPrint(res));
+
+
+			/*
+			var input = ["Fred-Jim-Bob", "Fred-Jim", "Fred-Thomas-Rob", "Fred"];
+            var output = [];
+            for (var i = 0; i < input.length; i++) {
+                var chain = input[i].split("-");
+                var currentNode = output;
+                for (var j = 0; j < chain.length; j++) {
+                    var wantedNode = chain[j];
+                    var lastNode = currentNode;
+                    for (var k = 0; k < currentNode.length; k++) {
+                        if (currentNode[k].name == wantedNode) {
+                            currentNode = currentNode[k].children;
+                            break;
+                        }
+                    }
+                    // If we couldn't find an item in this list of children
+                    // that has the right name, create one:
+                    if (lastNode == currentNode) {
+                        var newNode = currentNode[k] = {name: wantedNode, children: []};
+                        currentNode = newNode.children;
+                    }
+                }
+            }
+			 */
 		};
 	}
 }

@@ -23,7 +23,7 @@ class AuthorizationServerApplicationTests {
 	@Test
 	void testGetOrganizationChildren() {
 
-		Organization o1 = new Organization();
+	    Organization o1 = new Organization();
 		o1.setName("KTH");
 		o1.setEnabled(true);
 

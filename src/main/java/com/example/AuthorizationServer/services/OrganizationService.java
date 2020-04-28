@@ -3,12 +3,16 @@ package com.example.AuthorizationServer.services;
 import com.example.AuthorizationServer.bo.entity.Organization;
 import com.example.AuthorizationServer.repositories.OrganizationRepository;
 import com.example.AuthorizationServer.repositories.UserEntityRepository;
+import org.aspectj.weaver.ast.Or;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 /**
  * @author Jonas Lundvall (jonlundv@kth.se)
@@ -23,38 +27,103 @@ public class OrganizationService {
     private OrganizationRepository organizationRepository;
 
     public Organization getOrganizationById(Long id) {
-        return organizationRepository.findById(id);
+        Optional<Organization> optionalOrg = organizationRepository.findById(id);
+        if (!optionalOrg.isPresent())
+            throw new NoSuchElementException(); // ?
+        return optionalOrg.get();
     }
 
     public Organization getOrganizationByName(String name) {
-        return organizationRepository.findByName(name);
+        Optional<Organization> optionalOrg = organizationRepository.findByName(name);
+        if (!optionalOrg.isPresent())
+            throw new NoSuchElementException(); // ?
+        return optionalOrg.get();
     }
 
     public String getPathByName(String name) {
-        Organization org = organizationRepository.findByName(name);
-        return org.getPath();
+        Optional<Organization> optionalOrg = organizationRepository.findByName(name);
+        if (!optionalOrg.isPresent())
+            throw new NoSuchElementException(); // ?
+        return optionalOrg.get().getPath();
     }
 
     public Organization addOrganization(Organization org) {
-        Organization retOrg = organizationRepository.save(org);
-        retOrg.setPath("");
-        Organization fullOrg = organizationRepository.findByName(retOrg.getName());
-        fullOrg.setParent(fullOrg);
-        return organizationRepository.save(fullOrg);
+        Organization returnedOrg = organizationRepository.save(org);
+        returnedOrg.setPath("");
+        Optional<Organization> optionalOrg = organizationRepository.findByName(returnedOrg.getName());
+        Organization orgInDb = optionalOrg.get();
+        orgInDb.setParent(orgInDb);
+        return organizationRepository.save(orgInDb);
     }
 
     public Organization addParentToOrganization(Organization child, Organization parent) {
-        Organization fullChild = organizationRepository.findByName(child.getName());
-        Organization fullParent = organizationRepository.findByName(parent.getName());
-        fullChild.setParent(fullParent);
-        return organizationRepository.save(fullChild);
+        Optional<Organization> optionalChild = organizationRepository.findByName(child.getName());
+        Optional<Organization> optionalParent = organizationRepository.findByName(parent.getName());
+        if (!optionalChild.isPresent() || !optionalParent.isPresent())
+            throw new NoSuchElementException(); // ?
+        Organization childInDb = optionalChild.get();
+        Organization parentInDb = optionalParent.get();
+        childInDb.setParent(parentInDb);
+        return organizationRepository.save(childInDb);
     }
 
     public List<Organization> getAllChildrenOfOrganization(Organization parent) {
-        Organization parentInDB = organizationRepository.findByName(parent.getName());
+        Optional<Organization> optionalParent = organizationRepository.findByName(parent.getName());
+        if (!optionalParent.isPresent())
+            throw new NoSuchElementException(); // ?
+        Organization parentInDB = optionalParent.get();
         List<Organization> orgs = organizationRepository.findByPathStartsWith(parentInDB.getPath());
         if(orgs.contains(parentInDB))
             orgs.remove(parentInDB);
         return orgs;
+    }
+
+    public List<Organization> getDirectChildrenOfOrganization(Organization parent) {
+        Optional<Organization> optionalParent = organizationRepository.findByName(parent.getName());
+        if (!optionalParent.isPresent())
+            throw new NoSuchElementException(); // ?
+        Organization parentInDB = optionalParent.get();
+        List<Organization> orgs = organizationRepository.findByPathContains(parentInDB.getId().toString());
+        List<Organization> result = new ArrayList<>();
+        for (Organization o: orgs) {
+            String[] path = o.getPath().split("\\.");
+            if (path.length == 2)
+                result.add(o);
+        }
+        return result;
+    }
+
+    public List<Organization> getAll() {
+        return organizationRepository.findAllByOrderByPathAsc();
+    }
+
+    public Organization updateOrganization(Long id, Organization organization) {
+        Optional<Organization> optionalOrg = organizationRepository.findById(id);
+        if (!optionalOrg.isPresent())
+            throw new NoSuchElementException(); // ?
+        Organization updatedOrganization = optionalOrg.get();
+        updatedOrganization.setName(organization.getName());
+        updatedOrganization.setEnabled(organization.getEnabled());
+        return organizationRepository.save(updatedOrganization);
+    }
+
+    public void deleteOrganization(Long id) {
+        organizationRepository.deleteById(id);
+    }
+
+    public String prettyPrint(List<Organization> nodes) {
+
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < nodes.size(); i++) {
+
+            String[] path = nodes.get(i).getPath().split("\\.");
+
+            for (int j = 0; j < path.length - 1; j++) {
+                sb.append("  ");
+            }
+            sb.append(path[path.length - 1] + "\n");
+        }
+        return sb.toString();
     }
 }
