@@ -1,10 +1,13 @@
 package com.example.AuthorizationServer.controllers;
 
 import com.example.AuthorizationServer.bo.entity.UserEntity;
+import com.example.AuthorizationServer.bo.dto.UserEntityDTO;
 import com.example.AuthorizationServer.services.UserService;
+import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.expression.ParseException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,6 +30,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private ModelMapper modelMapper = new ModelMapper();
 
     // @Autowired
     // private OrganizationService orgService;
@@ -52,7 +58,7 @@ public class UserController {
      * @return the response entity
      */
     @GetMapping("/{id}")
-    public ResponseEntity<UserEntity> getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserEntityDTO> getUserById(@PathVariable Long id) {
         logger.info("Fetching UserEntity with id {}", id);
         Optional<UserEntity> user = userService.getUserByRoleAndId(role, id);
         if (!user.isPresent()) {
@@ -60,9 +66,9 @@ public class UserController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        // UserDto userDto = convertToDto(user.get());
+        UserEntityDTO userDto = convertToDto(user.get());
 
-        return new ResponseEntity<>(user.get(), HttpStatus.OK); // Change this later (user.get())
+        return new ResponseEntity<>(userDto, HttpStatus.OK);
     }
 
     /**
@@ -72,8 +78,9 @@ public class UserController {
      * @return the response entity
      */
     @PostMapping("/")
-    public UserEntity addUser(@RequestBody UserEntity userEntity) {
-        return userService.addUser(role, userEntity);
+    public UserEntityDTO addUser(@RequestBody UserEntity userEntity) {
+        UserEntity addedUser = userService.addUser(role, userEntity);
+        return convertToDto(addedUser);
     }
 
     /**
@@ -84,8 +91,10 @@ public class UserController {
      * @return the response entity
      */
     @PutMapping("/{id}")
-    public UserEntity updateUser(@RequestBody UserEntity userEntity, @PathVariable Long id) {
-        return userService.updateUser(role, id, userEntity);
+    public UserEntityDTO updateUser(@RequestBody UserEntity userEntity, @PathVariable Long id) {
+        UserEntity updatedUser = userService.updateUser(role, id, userEntity);
+        UserEntityDTO userDto = convertToDto(updatedUser);
+        return userDto;
     }
 
     /**
@@ -96,21 +105,25 @@ public class UserController {
      * @return the response entity
      */
     @PutMapping("/changePassword/{id}")
-    public UserEntity updateUserPassword(@RequestBody UserEntity userEntity, @PathVariable Long id) {
-        return userService.updatePassword(role, id, userEntity);
+    public UserEntityDTO updateUserPassword(@RequestBody UserEntity userEntity, @PathVariable Long id) {
+        UserEntity updatedUser = userService.updatePassword(role, id, userEntity);
+        UserEntityDTO userDto = convertToDto(updatedUser);
+        return userDto;
     }
 
     // Remove this later?!
     /**
      * Change role of a user entity with current role USER
      *
-     * @param userEntity the user entity with updated role
+     * @param userEntityDto the user entity with updated role
      * @param id the id of the user entity to be updated
      * @return the response entity
      */
     @PutMapping("/changeRole/{id}")
-    public UserEntity updateUserRole(@RequestBody UserEntity userEntity, @PathVariable Long id) {
-        return userService.updateRole(role, id, userEntity);
+    public UserEntityDTO updateUserRole(@RequestBody UserEntityDTO userEntityDto, @PathVariable Long id) {
+        UserEntity userEntity = convertToEntity(userEntityDto);
+        UserEntity updatedUser = userService.updateRole(role, id, userEntity);
+        return convertToDto(updatedUser);
     }
 
     // Remove this later?!
@@ -131,47 +144,28 @@ public class UserController {
     public @ResponseBody boolean verifyToken(){
         return true;
     }
-    /*@GetMapping(path="/org/{id}")
-    @ResponseBody
-    public ResponseEntity<?> findAllByOrgId(@PathVariable Long id) {
-        Organization org = new Organization();
-        org.setId(Long.valueOf(id));
-        Collection<UserEntity> users = (Collection<UserEntity>) userRepository.findByOrganization(org);
 
-        if (users.isEmpty()) {
-            return new ResponseEntity(HttpStatus.NOT_FOUND);
-        }
+    /**
+     * Convert user entity to user entity dto
+     * @param userEntity the user entity to convert
+     * @return the corresponding user entity dto
+     */
+    private UserEntityDTO convertToDto(UserEntity userEntity) {
+        UserEntityDTO userEntityDTO = modelMapper.map(userEntity, UserEntityDTO.class);
 
-        /* ArrayList<UserDto> usersDto = new ArrayList<>();
+        // Do something else if needed..?
 
-        for (UserEntity u : users) {
-            UserDto userDto = convertToDto(u);
-            usersDto.add(userDto);
-        }*/
-
-        // return new ResponseEntity<Collection<UserDto>>(usersDTO, HttpStatus.OK);
-        // return new ResponseEntity<>(users, HttpStatus.OK);
-    // }
-
-    /*
-    private UserDto convertToDto(UserEntity user) {
-        UserDto studentDto = modelMapper.map(user, UserDto.class);
-
-        // Do something..
-        studentDto.setImageId(student.getImage().getId());
-        studentDto.setImagageType(student.getImage().getFileType());
-
-        return studentDto;
+        return userEntityDTO;
     }
 
-    private UserEntity convertToEntity(UserDto userDto) throws ParseException {
-        UserEntity newUser = modelMapper.map(userDto, UserEntity.class);
-        Optional<UserEntity> user = userRepository.findById(userDto.getId());
-        if(!user.isPresent())
-            return null;
-
-        return user.get();
+    /**
+     * Convert user entity dto to user entity
+     * @param userEntityDto the user entity dto to convert
+     * @return the corresponding user entity
+     */
+    private UserEntity convertToEntity(UserEntityDTO userEntityDto) throws ParseException {
+        UserEntity newUser = modelMapper.map(userEntityDto, UserEntity.class);
+        Optional<UserEntity> user = userService.getUserByRoleAndId(role, userEntityDto.getId());
+        return user.orElse(null);
     }
-    */
-
 }

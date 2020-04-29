@@ -1,8 +1,6 @@
 package com.example.AuthorizationServer.repositories;
 
 import com.example.AuthorizationServer.bo.entity.Organization;
-import com.example.AuthorizationServer.bo.entity.UserEntity;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
