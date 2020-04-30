@@ -1,6 +1,7 @@
 package com.example.AuthorizationServer.controllers;
 
 import com.example.AuthorizationServer.bo.dto.OrganizationDTO;
+import com.example.AuthorizationServer.bo.dto.OrganizationTreeNode;
 import com.example.AuthorizationServer.bo.entity.Organization;
 import com.example.AuthorizationServer.services.OrganizationService;
 import org.modelmapper.ModelMapper;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,6 +49,28 @@ public class OrganizationController {
             organizationDtos.add(convertToDto(o));
         }
         return new ResponseEntity<>(organizationDtos, HttpStatus.OK);
+    }
+
+    /*
+        Get organization tree
+     */
+    @GetMapping("/tree/")
+    public ResponseEntity<?> getOrganizationTree() {
+        List<Organization> organizations = orgService.getAll();
+        List<OrganizationTreeNode> nodes = new ArrayList<>();
+
+        for (Organization o: organizations) {
+            OrganizationTreeNode n = new OrganizationTreeNode();
+            n.setId(o.getId());
+            n.setName(o.getName());
+            n.setPath(o.getPath());
+            n.setEnabled(o.getEnabled());
+            nodes.add(n);
+        }
+
+        List<OrganizationTreeNode> tree = buildTree(nodes);
+
+        return new ResponseEntity<>(tree, HttpStatus.OK);
     }
 
     /*
@@ -140,5 +164,56 @@ public class OrganizationController {
         return organization;
     }
 
-    
+    private static List<OrganizationTreeNode> buildTree(List<OrganizationTreeNode> nodes) {
+        HashMap<String, OrganizationTreeNode> map = new HashMap<>();
+        for (OrganizationTreeNode n: nodes) {
+            map.put(n.getId().toString(), n);
+        }
+        List<OrganizationTreeNode> tree = new ArrayList<>();
+        for (OrganizationTreeNode n: nodes) {
+            String[] path = n.getPath().split("\\.");
+            if (path.length == 1) {
+                tree.add(n);
+            } else {
+                // find nearest parent
+                OrganizationTreeNode parent = map.get(path[path.length - 2]);
+                // add self as child
+                parent.addSubOrganization(n);
+            }
+        }
+        return tree;
+    }
+    /*private static List<TreeNode> buildTree(List<TreeNode> nodes) {
+        HashMap<String, TreeNode> map = new HashMap<>();
+        for (TreeNode n: nodes) {
+            map.put(n.id.toString(), n);
+        }
+        List<TreeNode> tree = new ArrayList<>();
+        for (TreeNode n: nodes) {
+            String[] path = n.path.split("\\.");
+            if (path.length == 1) {
+                tree.add(n);
+            } else {
+                // find nearest parent
+                TreeNode parent = map.get(path[path.length - 2]);
+                // add self as child
+                parent.subOrganizations.add(n);
+            }
+        }
+        return tree;
+    }
+
+    private class TreeNode {
+
+        Long id;
+        String name;
+        String path;
+        Boolean enabled;
+        List<TreeNode> subOrganizations;
+
+        TreeNode() {
+            subOrganizations = new ArrayList<>();
+        }
+    }*/
+
 }
