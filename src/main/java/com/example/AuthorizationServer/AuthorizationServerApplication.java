@@ -145,7 +145,11 @@ public class AuthorizationServerApplication {
 
             System.out.println(orgService.prettyPrint(res));
 
+			System.out.println("Change parent");
+			orgService.changeParentOfOrganization(7L,5L);
+			res = orgService.getAll();
 
+			System.out.println(orgService.prettyPrint(res));
 			/*
 			var input = ["Fred-Jim-Bob", "Fred-Jim", "Fred-Thomas-Rob", "Fred"];
             var output = [];

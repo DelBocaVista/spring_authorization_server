@@ -6,10 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * @author Jonas Lundvall (jonlundv@kth.se)
@@ -92,6 +89,45 @@ public class OrganizationService {
 
     public List<Organization> getAll() {
         return organizationRepository.findAllByOrderByPathAsc();
+    }
+
+    public void changeParentOfOrganization(Long id, Long newParentId) {
+
+        // NEEDS TO CHECK IF BOTH id AND newParentId are in the same organization!!!
+
+        // Get organization and the new parent
+        Optional<Organization> optionalOrg = organizationRepository.findById(id);
+        if (!optionalOrg.isPresent())
+            throw new NoSuchElementException();
+
+        Optional<Organization> optionalNewParent = organizationRepository.findById(newParentId);
+        if (!optionalNewParent.isPresent())
+            throw new NoSuchElementException();
+
+        Organization org = optionalOrg.get();
+        Organization newParent = optionalNewParent.get();
+
+        // Previous path of the organization and current parent
+        String[] orgPath = org.getPath().split("\\.");
+
+        if (orgPath.length <= 1)
+            throw new IllegalArgumentException("Root organizations can not be changed into sub organizations");
+
+        // Get all organizations whom are related to the organization
+        List<Organization> allRelated = organizationRepository.findByPathContains(org.getId().toString());
+
+        // organization already has a parent - replace path of parent with path of new parent
+        String prevFullPath = org.getPath();
+        String prevParentsOfOrg = prevFullPath.substring(0,prevFullPath.indexOf("." + org.getId()));
+        System.out.println("prevP " + prevParentsOfOrg);
+
+        for (Organization o : allRelated) {
+            String s = o.getId() + " " + o.getPath();
+            o.setPath(o.getPath().replace(prevParentsOfOrg, newParent.getPath()));
+            System.out.println(s + " " + o.getPath());
+        }
+
+        organizationRepository.saveAll(allRelated);
     }
 
     public Organization updateOrganization(Long id, Organization organization) {
