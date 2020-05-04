@@ -2,6 +2,9 @@ package com.example.AuthorizationServer.bo.entity;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Jonas Lundvall (jonlundv@kth.se)
@@ -40,9 +43,9 @@ public class UserEntity implements Serializable {
     @Column(name="user_enabled", nullable = false, columnDefinition = "boolean default true")
     private Boolean enabled;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinColumn(name = "org_id")
-    private Organization organization;
+    private Set<Organization> organizations = new HashSet<>();
 
     // Getters/setters ----------------------------------------------------------------------------
 
@@ -58,8 +61,8 @@ public class UserEntity implements Serializable {
     public Boolean getEnabled() { return enabled; }
     public void setEnabled(Boolean enabled) { this.enabled = enabled; }
 
-    public Organization getOrganization() { return organization; }
-    public void setOrganization(Organization org) { this.organization = org; }
+    public Set<Organization> getOrganizations() { return organizations; }
+    public void setOrganizations(Set<Organization> orgs) { this.organizations = orgs; }
 
     public String getUsername() { return username;}
     public void setUsername(String username) { this.username = username; }
@@ -71,15 +74,17 @@ public class UserEntity implements Serializable {
     public void setRole(String role) { this.role = role; }
 
     // Constructors -------------------------------------------------------------------------------
-    public UserEntity() { }
+    public UserEntity() {
+        this.organizations = new HashSet<>();
+    }
 
-    public UserEntity(String firstname, String lastname, String username, String password, String role, Organization organization) {
+    public UserEntity(String firstname, String lastname, String username, String password, String role, Set<Organization> organizations) {
         this.firstname = firstname;
         this.lastname = lastname;
         this.username = username;
         this.password = password;
         this.role = role;
-        this.organization = organization;
+        this.organizations = organizations;
         this.enabled = true;
     }
 
@@ -89,6 +94,14 @@ public class UserEntity implements Serializable {
     }
 
     // Actions ------------------------------------------------------------------------------------
+
+    public void addOrganization(Organization org) {
+        this.organizations.add(org);
+    }
+
+    public void removeOrganization(Organization org) {
+        this.organizations.remove(org);
+    }
 
     @Override
     public String toString() {
@@ -100,7 +113,7 @@ public class UserEntity implements Serializable {
                 ", password='" + password + '\'' +
                 ", role='" + role + '\'' +
                 ", enabled=" + enabled +
-                ", organization=" + organization +
+                ", organizations=" + organizations +
                 '}';
     }
 }

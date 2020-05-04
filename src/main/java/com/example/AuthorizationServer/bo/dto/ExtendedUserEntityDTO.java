@@ -1,16 +1,15 @@
 package com.example.AuthorizationServer.bo.dto;
 
-import com.example.AuthorizationServer.bo.entity.Organization;
-
 import java.util.Set;
 
-public class UserEntityDTO {
+public class ExtendedUserEntityDTO {
 
     // Properties ---------------------------------------------------------------------------------
     private Long id;
     private String firstname;
     private String lastname;
     private String username;
+    private String password;
     private String role;
     private Boolean enabled;
     private Set<OrganizationDTO> organizations;
@@ -29,6 +28,9 @@ public class UserEntityDTO {
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
 
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
 
@@ -39,14 +41,15 @@ public class UserEntityDTO {
     public void setOrganizations(Set<OrganizationDTO> organizations) { this.organizations = organizations; }
 
     // Constructors -------------------------------------------------------------------------------
-    public UserEntityDTO() {
+    public ExtendedUserEntityDTO() {
     }
 
-    public UserEntityDTO(Long id, String firstname, String lastname, String username, String role, Boolean enabled, Set<OrganizationDTO> organizations) {
+    public ExtendedUserEntityDTO(Long id, String firstname, String lastname, String username, String password, String role, Boolean enabled, Set<OrganizationDTO> organizations) {
         this.id = id;
         this.firstname = firstname;
         this.lastname = lastname;
         this.username = username;
+        this.password = password;
         this.role = role;
         this.enabled = enabled;
         this.organizations = organizations;

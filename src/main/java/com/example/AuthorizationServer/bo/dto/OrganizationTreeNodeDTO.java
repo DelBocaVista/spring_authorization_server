@@ -3,15 +3,15 @@ package com.example.AuthorizationServer.bo.dto;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OrganizationTreeNode {
+public class OrganizationTreeNodeDTO {
 
     Long id;
     String name;
     String path;
     Boolean enabled;
-    List<OrganizationTreeNode> subOrganizations;
+    List<OrganizationTreeNodeDTO> subOrganizations;
 
-    public OrganizationTreeNode() {
+    public OrganizationTreeNodeDTO() {
         subOrganizations = new ArrayList<>();
     }
 
@@ -27,10 +27,10 @@ public class OrganizationTreeNode {
     public Boolean getEnabled() { return enabled; }
     public void setEnabled(Boolean enabled) { this.enabled = enabled; }
 
-    public List<OrganizationTreeNode> getSubOrganizations() { return subOrganizations; }
-    public void setSubOrganizations(List<OrganizationTreeNode> subOrganizations) { this.subOrganizations = subOrganizations; }
+    public List<OrganizationTreeNodeDTO> getSubOrganizations() { return subOrganizations; }
+    public void setSubOrganizations(List<OrganizationTreeNodeDTO> subOrganizations) { this.subOrganizations = subOrganizations; }
 
-    public void addSubOrganization(OrganizationTreeNode node) {
+    public void addSubOrganization(OrganizationTreeNodeDTO node) {
         this.subOrganizations.add(node);
     }
 }

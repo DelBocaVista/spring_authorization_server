@@ -22,7 +22,7 @@ public class Organization implements Serializable {
     @Column(name="org_id", updatable=false)
     private Long id;
 
-    @OneToMany(mappedBy = "organization", cascade=CascadeType.ALL)
+    @ManyToMany(mappedBy = "organizations", cascade=CascadeType.ALL)
     private Set<UserEntity> userEntities = new HashSet<>();
 
     @Column(name="org_name", unique = true)

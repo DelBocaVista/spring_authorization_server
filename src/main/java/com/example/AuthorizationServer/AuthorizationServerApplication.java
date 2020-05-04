@@ -1,5 +1,7 @@
 package com.example.AuthorizationServer;
 
+import com.example.AuthorizationServer.bo.dto.OrganizationDTO;
+import com.example.AuthorizationServer.bo.dto.UserEntityDTO;
 import com.example.AuthorizationServer.bo.entity.Organization;
 import com.example.AuthorizationServer.bo.entity.UserEntity;
 import com.example.AuthorizationServer.repositories.OrganizationRepository;
@@ -61,10 +63,12 @@ public class AuthorizationServerApplication {
 		o1.setEnabled(true);
 		o1.addUser(u1);
 
-		u1.setOrganization(o1);
+		u1.addOrganization(o1);
+		u2.addOrganization(o1);
+		u3.addOrganization(o1);
 
 		return () -> {
-			orgService.addOrganization(o1);
+			orgService.addOrganizationSeed(o1);
 			userService.addUser(u1);
 			userService.addUser(u2);
 			userService.addUser(u3);
@@ -88,19 +92,31 @@ public class AuthorizationServerApplication {
 
 			//Organization o1new = o.findByName("KTH");
 
-			orgService.addOrganization(o2);
-			orgService.addOrganization(o3);
-			orgService.addOrganization(o4);
-			orgService.addOrganization(o5);
+			orgService.addOrganizationSeed(o2);
+			orgService.addOrganizationSeed(o3);
+			orgService.addOrganizationSeed(o4);
+			orgService.addOrganizationSeed(o5);
 
 			orgService.addParentToOrganization(o2,o1);
 			orgService.addParentToOrganization(o3,o1);
 			orgService.addParentToOrganization(o4,o1);
 			orgService.addParentToOrganization(o5,o2);
 
+			Organization or = orgService.getOrganizationByIdSeed(3L);
+			System.out.println("3L " + or.getName());
+			UserEntity u = userService.getUserByUsername("admin");
+			System.out.println(u);
+			u.addOrganization(or);
+			System.out.println("u " + u.getUsername());
+			for (Organization o: u.getOrganizations()) {
+				System.out.println(o.getName());
+			}
+
+			System.out.println(userService.updateUser("ADMIN", u.getId(), u));
+
 			System.out.println("Children");
-			List<Organization> res = orgService.getAllChildrenOfOrganization(o1);
-			for (Organization o:res) {
+			List<OrganizationDTO> res = orgService.getAllChildrenOfOrganization(o1.getId());
+			for (OrganizationDTO o:res) {
 				System.out.println(o.getName());
 			}
 
@@ -120,23 +136,23 @@ public class AuthorizationServerApplication {
             o9.setName("Frans");
             o9.setEnabled(true);
 
-            orgService.addOrganization(o6);
-            orgService.addOrganization(o7);
-            orgService.addOrganization(o8);
-            orgService.addOrganization(o9);
+            orgService.addOrganizationSeed(o6);
+            orgService.addOrganizationSeed(o7);
+            orgService.addOrganizationSeed(o8);
+            orgService.addOrganizationSeed(o9);
 
             orgService.addParentToOrganization(o7,o6);
             orgService.addParentToOrganization(o8,o6);
             orgService.addParentToOrganization(o9,o7);
 
             System.out.println("Get All");
-			res = orgService.getAll();
+			res = orgService.getAllOrganizations();
 
             System.out.println(orgService.prettyPrint(res));
 
             System.out.println("Get All Children of 1"); // NEED TO ADD SORTING?
-            Organization org = orgService.getOrganizationById(1L);
-            res = orgService.getAllChildrenOfOrganization(org);
+            OrganizationDTO org = orgService.getOrganizationDTOById(1L);
+            res = orgService.getAllChildrenOfOrganization(org.getId());
 
             System.out.println(orgService.prettyPrint(res));
 
@@ -147,7 +163,7 @@ public class AuthorizationServerApplication {
 
 			System.out.println("Change parent");
 			orgService.changeParentOfOrganization(7L,5L);
-			res = orgService.getAll();
+			res = orgService.getAllOrganizations();
 
 			System.out.println(orgService.prettyPrint(res));
 			/*

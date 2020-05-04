@@ -1,8 +1,15 @@
 package com.example.AuthorizationServer.services;
 
+import com.example.AuthorizationServer.bo.dto.OrganizationDTO;
+import com.example.AuthorizationServer.bo.dto.OrganizationTreeNodeDTO;
 import com.example.AuthorizationServer.bo.entity.Organization;
+import com.example.AuthorizationServer.controllers.UserController;
 import com.example.AuthorizationServer.repositories.OrganizationRepository;
+import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.expression.ParseException;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,21 +24,38 @@ import java.util.*;
 @Transactional // Remove?
 public class OrganizationService {
 
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+
     @Autowired
     private OrganizationRepository organizationRepository;
 
-    public Organization getOrganizationById(Long id) {
+    @Autowired
+    private ModelMapper modelMapper = new ModelMapper();
+
+    public OrganizationDTO getOrganizationDTOById(Long id) {
+        return convertToDto(this.getOrganizationById(id));
+    }
+
+    // JUST FOR SEEDING - REMOVE LATER!!
+    public Organization getOrganizationByIdSeed(Long id) {
+        return this.getOrganizationById(id);
+    }
+
+    private Organization getOrganizationById(Long id) {
+        logger.info("Fetching Organization with id {}", id);
         Optional<Organization> optionalOrg = organizationRepository.findById(id);
-        if (!optionalOrg.isPresent())
-            throw new NoSuchElementException(); // ?
+        if (!optionalOrg.isPresent()) {
+            logger.error("Organization with id {} not found.", id);
+            throw new NoSuchElementException();
+        }
         return optionalOrg.get();
     }
 
-    public Organization getOrganizationByName(String name) {
+    public OrganizationDTO getOrganizationByName(String name) {
         Optional<Organization> optionalOrg = organizationRepository.findByName(name);
         if (!optionalOrg.isPresent())
             throw new NoSuchElementException(); // ?
-        return optionalOrg.get();
+        return convertToDto(optionalOrg.get());
     }
 
     public String getPathByName(String name) {
@@ -41,7 +65,17 @@ public class OrganizationService {
         return optionalOrg.get().getPath();
     }
 
-    public Organization addOrganization(Organization org) {
+    public OrganizationDTO addOrganization(OrganizationDTO org) {
+        Organization returnedOrg = organizationRepository.save(convertToEntity(org));
+        returnedOrg.setPath("");
+        Optional<Organization> optionalOrg = organizationRepository.findByName(returnedOrg.getName());
+        Organization orgInDb = optionalOrg.get();
+        orgInDb.setParent(orgInDb);
+        return convertToDto(organizationRepository.save(orgInDb));
+    }
+
+    // JUST FOR SEEDING - REMOVE LATER!!
+    public Organization addOrganizationSeed(Organization org) {
         Organization returnedOrg = organizationRepository.save(org);
         returnedOrg.setPath("");
         Optional<Organization> optionalOrg = organizationRepository.findByName(returnedOrg.getName());
@@ -50,7 +84,19 @@ public class OrganizationService {
         return organizationRepository.save(orgInDb);
     }
 
-    public Organization addParentToOrganization(Organization child, Organization parent) {
+    public OrganizationDTO addParentToOrganization(Long childId, Long parentId) {
+        Organization child = this.getOrganizationById(childId);
+        Organization parent = this.getOrganizationById(parentId);
+        return this.addParentToOrganization(child, parent);
+    }
+
+    public OrganizationDTO addParentToOrganization(OrganizationDTO childDto, Long parentId) {
+        Organization parent = this.getOrganizationById(parentId);
+        Organization child = convertToEntity(childDto);
+        return this.addParentToOrganization(child, parent);
+    }
+
+    public OrganizationDTO addParentToOrganization(Organization child, Organization parent) {
         Optional<Organization> optionalChild = organizationRepository.findByName(child.getName());
         Optional<Organization> optionalParent = organizationRepository.findByName(parent.getName());
         if (!optionalChild.isPresent() || !optionalParent.isPresent())
@@ -58,37 +104,74 @@ public class OrganizationService {
         Organization childInDb = optionalChild.get();
         Organization parentInDb = optionalParent.get();
         childInDb.setParent(parentInDb);
-        return organizationRepository.save(childInDb);
+        return convertToDto(organizationRepository.save(childInDb));
     }
 
-    public List<Organization> getAllChildrenOfOrganization(Organization parent) {
-        Optional<Organization> optionalParent = organizationRepository.findByName(parent.getName());
+    public List<OrganizationDTO> getAllChildrenOfOrganization(Long parentId) {
+        Optional<Organization> optionalParent = organizationRepository.findById(parentId);
         if (!optionalParent.isPresent())
             throw new NoSuchElementException(); // ?
         Organization parentInDB = optionalParent.get();
         List<Organization> orgs = organizationRepository.findByPathStartsWith(parentInDB.getPath());
         if(orgs.contains(parentInDB))
             orgs.remove(parentInDB);
-        return orgs;
+
+        List<OrganizationDTO> orgDtos = new ArrayList<>();
+        for (Organization o: orgs) {
+            orgDtos.add(convertToDto(o));
+        }
+        return orgDtos;
     }
 
-    public List<Organization> getDirectChildrenOfOrganization(Organization parent) {
+    public List<OrganizationDTO> getDirectChildrenOfOrganization(OrganizationDTO parent) {
         Optional<Organization> optionalParent = organizationRepository.findByName(parent.getName());
         if (!optionalParent.isPresent())
             throw new NoSuchElementException(); // ?
         Organization parentInDB = optionalParent.get();
         List<Organization> orgs = organizationRepository.findByPathContains(parentInDB.getId().toString());
-        List<Organization> result = new ArrayList<>();
+        List<OrganizationDTO> result = new ArrayList<>();
         for (Organization o: orgs) {
             String[] path = o.getPath().split("\\.");
             if (path.length == 2)
-                result.add(o);
+                result.add(convertToDto(o));
         }
         return result;
     }
 
-    public List<Organization> getAll() {
+    public List<OrganizationDTO> getAllOrganizations() {
+        List<OrganizationDTO> orgDtos = new ArrayList<>();
+        List<Organization> orgs = this.findAll();
+        for (Organization o: orgs) {
+            orgDtos.add(convertToDto(o));
+        }
+
+        return orgDtos;
+    }
+
+    public List<Organization> getAllOrganizationsSeed() {
+        return this.findAll();
+    }
+
+    private List<Organization> findAll() {
         return organizationRepository.findAllByOrderByPathAsc();
+    }
+
+    public List<OrganizationTreeNodeDTO> buildOrganizationTree() {
+        List<Organization> organizations = this.findAll();
+        List<OrganizationTreeNodeDTO> nodes = new ArrayList<>();
+
+        for (Organization o: organizations) {
+            OrganizationTreeNodeDTO n = new OrganizationTreeNodeDTO();
+            n.setId(o.getId());
+            n.setName(o.getName());
+            n.setPath(o.getPath());
+            n.setEnabled(o.getEnabled());
+            nodes.add(n);
+        }
+
+        List<OrganizationTreeNodeDTO> tree = buildTree(nodes);
+
+        return tree;
     }
 
     public void changeParentOfOrganization(Long id, Long newParentId) {
@@ -130,21 +213,21 @@ public class OrganizationService {
         organizationRepository.saveAll(allRelated);
     }
 
-    public Organization updateOrganization(Long id, Organization organization) {
+    public OrganizationDTO updateOrganization(Long id, OrganizationDTO organizationDTO) {
         Optional<Organization> optionalOrg = organizationRepository.findById(id);
         if (!optionalOrg.isPresent())
             throw new NoSuchElementException(); // ?
         Organization updatedOrganization = optionalOrg.get();
-        updatedOrganization.setName(organization.getName());
-        updatedOrganization.setEnabled(organization.getEnabled());
-        return organizationRepository.save(updatedOrganization);
+        updatedOrganization.setName(organizationDTO.getName());
+        updatedOrganization.setEnabled(organizationDTO.getEnabled());
+        return convertToDto(organizationRepository.save(updatedOrganization));
     }
 
     public void deleteOrganization(Long id) {
         organizationRepository.deleteById(id);
     }
 
-    public String prettyPrint(List<Organization> nodes) {
+    public String prettyPrint(List<OrganizationDTO> nodes) {
 
         StringBuilder sb = new StringBuilder();
 
@@ -158,5 +241,51 @@ public class OrganizationService {
             sb.append(path[path.length - 1] + "\n");
         }
         return sb.toString();
+    }
+
+    /**
+     * Convert organization to organization dto
+     * @param organization the organization to convert
+     * @return the corresponding user entity dto
+     */
+    private OrganizationDTO convertToDto(Organization organization) {
+        OrganizationDTO organizationDTO = modelMapper.map(organization, OrganizationDTO.class);
+
+        // Do something else if needed..?
+
+        return organizationDTO;
+    }
+
+    /**
+     * Convert user entity dto to user entity
+     * @param organizationDto the user entity dto to convert
+     * @return the corresponding user entity
+     */
+    private Organization convertToEntity(OrganizationDTO organizationDto) throws ParseException {
+        Organization organization = modelMapper.map(organizationDto, Organization.class);
+
+        // Do something else if needed..?
+
+        return organization;
+    }
+
+    private static List<OrganizationTreeNodeDTO> buildTree(List<OrganizationTreeNodeDTO> nodes) {
+        HashMap<String, OrganizationTreeNodeDTO> map = new HashMap<>();
+        for (OrganizationTreeNodeDTO n: nodes) {
+            map.put(n.getId().toString(), n);
+        }
+        List<OrganizationTreeNodeDTO> tree = new ArrayList<>();
+        for (OrganizationTreeNodeDTO n: nodes) {
+            String[] path = n.getPath().split("\\.");
+            if (path.length == 1) {
+                tree.add(n);
+            } else {
+                // find nearest parent
+                OrganizationTreeNodeDTO parent = map.get(path[path.length - 2]);
+                // add self as child
+                parent.addSubOrganization(n);
+            }
+        }
+        return tree;
     }
 }

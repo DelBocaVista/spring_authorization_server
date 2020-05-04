@@ -12,7 +12,7 @@ import java.util.Optional;
 @Transactional
 public interface UserEntityRepository extends CrudRepository<UserEntity, String> {
 
-    UserEntity findByUsernameAndEnabled(String userName, boolean enabled);
+    Optional<UserEntity> findByUsernameAndEnabled(String userName, boolean enabled);
 
     /*List<UserEntity> findAllByEnabled(boolean enabled);
 
@@ -22,11 +22,13 @@ public interface UserEntityRepository extends CrudRepository<UserEntity, String>
 
     // Extended handling
 
-    UserEntity findByUsernameAndRoleAndEnabled(String userName, String role, boolean enabled);
+    Optional<UserEntity> findByUsernameAndRoleAndEnabled(String userName, String role, boolean enabled);
 
     List<UserEntity> findAllByRoleAndEnabled(String role, boolean enabled);
 
     Optional<UserEntity> findByRoleAndId(String role, Long id);
+
+    Optional<UserEntity> findById(Long id);
 
     void deleteByRoleAndId(String role, Long id);
 }
