@@ -2,9 +2,7 @@ package com.example.AuthorizationServer.controllers;
 
 import com.example.AuthorizationServer.bo.dto.OrganizationDTO;
 import com.example.AuthorizationServer.bo.dto.OrganizationTreeNodeDTO;
-import com.example.AuthorizationServer.bo.entity.Organization;
 import com.example.AuthorizationServer.services.OrganizationService;
-import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -33,8 +30,10 @@ public class OrganizationController {
     @Autowired
     private OrganizationService orgService;
 
-    /*
-        Get all organizations
+    /**
+     * Retrieve all organisations
+     *
+     * @return the response entity
      */
     @GetMapping("/")
     public ResponseEntity<?> getAllOrganizations() {
@@ -42,17 +41,33 @@ public class OrganizationController {
         return new ResponseEntity<>(organizationDTOS, HttpStatus.OK);
     }
 
-    /*
-        Get organization tree
+    /**
+     * Retrieve the full organization tree
+     *
+     * @return the response entity
      */
     @GetMapping("/tree/")
     public ResponseEntity<?> getOrganizationTree() {
-        List<OrganizationTreeNodeDTO> tree = orgService.buildOrganizationTree();
+        List<OrganizationTreeNodeDTO> tree = orgService.getFullOrganizationTree();
         return new ResponseEntity<>(tree, HttpStatus.OK);
     }
 
-    /*
-        Get single organization by id
+    /**
+     * Retrieve the full organization tree
+     *
+     * @return the response entity
+     */
+    @GetMapping("/tree/{id}")
+    public ResponseEntity<?> getOrganizationSubTree(@PathVariable Long id) {
+        List<OrganizationTreeNodeDTO> tree = orgService.getOrganizationSubTree(id);
+        return new ResponseEntity<>(tree, HttpStatus.OK);
+    }
+
+    /**
+     * Get a single organization by id
+     *
+     * @param id the organization id
+     * @return the response entity
      */
     @GetMapping("/{id}")
     public ResponseEntity<OrganizationDTO> getOrganizationById(@PathVariable Long id) {
@@ -65,6 +80,7 @@ public class OrganizationController {
 
         return new ResponseEntity<>(organizationDTO, HttpStatus.OK);
     }
+
 
     @PostMapping("/")
     public OrganizationDTO addOrganization(@RequestBody OrganizationDTO organizationDto) {

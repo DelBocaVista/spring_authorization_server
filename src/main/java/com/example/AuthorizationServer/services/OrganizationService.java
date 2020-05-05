@@ -139,8 +139,12 @@ public class OrganizationService {
     }
 
     public List<OrganizationDTO> getAllOrganizations() {
+        return this.findAll();
+    }
+
+    private List<OrganizationDTO> findAll() {
         List<OrganizationDTO> orgDtos = new ArrayList<>();
-        List<Organization> orgs = this.findAll();
+        List<Organization> orgs = organizationRepository.findAllByOrderByPathAsc();
         for (Organization o: orgs) {
             orgDtos.add(convertToDto(o));
         }
@@ -148,19 +152,44 @@ public class OrganizationService {
         return orgDtos;
     }
 
-    public List<Organization> getAllOrganizationsSeed() {
-        return this.findAll();
+    public List<OrganizationTreeNodeDTO> getOrganizationSubTree(Long id) {
+        List<Organization> organizations = organizationRepository.findByPathContainsOrderByPathAsc(id.toString());
+        List<OrganizationDTO> organizationDTOS = new ArrayList<>();
+
+        // Because of ascending sorting, the first item in organizations will be node with given id
+        String[] pathArray = organizations.get(0).getPath().split("\\.");
+        for (Organization o: organizations) {
+            OrganizationDTO dto = convertToDto(o);
+            if(pathArray.length > 1) {
+                // Path does not start with given id
+                String path = o.getPath();
+                String match = "." + id + ".";
+                if(o.getId().equals(id))
+                    match = "." + id;
+                String newPath = path.substring(path.indexOf(match));
+                dto.setPath(newPath.substring(1));
+                organizationDTOS.add(dto);
+            } else {
+                organizationDTOS.add(convertToDto(o));
+            }
+        }
+
+        List<OrganizationTreeNodeDTO> nodes = convertToTreeNodeDto(organizationDTOS);
+
+        return buildTree(nodes);
     }
 
-    private List<Organization> findAll() {
-        return organizationRepository.findAllByOrderByPathAsc();
+    public List<OrganizationTreeNodeDTO> getFullOrganizationTree() {
+        List<OrganizationDTO> organizations = this.findAll();
+        List<OrganizationTreeNodeDTO> nodes = convertToTreeNodeDto(organizations);
+
+        return buildTree(nodes);
     }
 
-    public List<OrganizationTreeNodeDTO> buildOrganizationTree() {
-        List<Organization> organizations = this.findAll();
+    private List<OrganizationTreeNodeDTO> convertToTreeNodeDto(List<OrganizationDTO> organizations) {
         List<OrganizationTreeNodeDTO> nodes = new ArrayList<>();
 
-        for (Organization o: organizations) {
+        for (OrganizationDTO o: organizations) {
             OrganizationTreeNodeDTO n = new OrganizationTreeNodeDTO();
             n.setId(o.getId());
             n.setName(o.getName());
@@ -168,10 +197,7 @@ public class OrganizationService {
             n.setEnabled(o.getEnabled());
             nodes.add(n);
         }
-
-        List<OrganizationTreeNodeDTO> tree = buildTree(nodes);
-
-        return tree;
+        return nodes;
     }
 
     public void changeParentOfOrganization(Long id, Long newParentId) {

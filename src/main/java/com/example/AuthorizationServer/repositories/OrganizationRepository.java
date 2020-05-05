@@ -26,6 +26,8 @@ public interface OrganizationRepository extends CrudRepository<Organization, Str
 
     List<Organization> findByPathContains(String id);
 
+    List<Organization> findByPathContainsOrderByPathAsc(String id);
+
     void deleteById(Long id);
 
     @Query("SELECT path FROM Organization WHERE id =:id")
