@@ -1,6 +1,6 @@
-package com.example.AuthorizationServer.config;
+package com.example.AuthorizationServer.security;
 
-import com.example.AuthorizationServer.services.CustomUserDetails;
+import com.example.AuthorizationServer.security.CustomUserDetails;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
@@ -9,6 +9,11 @@ import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenCo
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @author Jonas Lundvall (jonlundv@kth.se)
+ *
+ * Custom helper which acts as a TokenEnhancer for when tokens are granted.
+ */
 public class CustomTokenConverter extends JwtAccessTokenConverter {
 
     @Override

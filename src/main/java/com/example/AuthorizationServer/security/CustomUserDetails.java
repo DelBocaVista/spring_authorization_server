@@ -1,4 +1,4 @@
-package com.example.AuthorizationServer.services;
+package com.example.AuthorizationServer.security;
 
 import com.example.AuthorizationServer.bo.dto.OrganizationDTO;
 import org.springframework.security.core.GrantedAuthority;
@@ -13,11 +13,14 @@ import java.util.Collection;
  */
 public class CustomUserDetails extends User {
 
+    // Properties ---------------------------------------------------------------------------------
     private Collection<OrganizationDTO> organizations;
 
+    // Getters/setters ----------------------------------------------------------------------------
     public Collection<OrganizationDTO> getOrganizations() { return organizations; }
     public void setOrganizations(Collection<OrganizationDTO> organizations) { this.organizations = organizations; }
 
+    // Constructors -------------------------------------------------------------------------------
     public CustomUserDetails(String username, String password, Collection<? extends GrantedAuthority> authorities) {
         super(username, password, authorities);
     }

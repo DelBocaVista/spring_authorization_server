@@ -1,5 +1,10 @@
 package com.example.AuthorizationServer.bo.dto;
 
+/**
+ * @author Jonas Lundvall (jonlundv@kth.se)
+ *
+ * Data transfer object for Organization.
+ */
 public class OrganizationDTO {
 
     // Properties ---------------------------------------------------------------------------------

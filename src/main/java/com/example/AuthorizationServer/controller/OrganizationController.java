@@ -1,8 +1,8 @@
-package com.example.AuthorizationServer.controllers;
+package com.example.AuthorizationServer.controller;
 
 import com.example.AuthorizationServer.bo.dto.OrganizationDTO;
 import com.example.AuthorizationServer.bo.dto.OrganizationTreeNodeDTO;
-import com.example.AuthorizationServer.services.OrganizationService;
+import com.example.AuthorizationServer.service.OrganizationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

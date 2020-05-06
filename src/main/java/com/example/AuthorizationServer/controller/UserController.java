@@ -1,9 +1,8 @@
-package com.example.AuthorizationServer.controllers;
+package com.example.AuthorizationServer.controller;
 
-import com.example.AuthorizationServer.bo.dto.ExtendedUserEntityDTO;
-import com.example.AuthorizationServer.bo.entity.UserEntity;
+import com.example.AuthorizationServer.bo.dto.UserEntityExtendedDTO;
 import com.example.AuthorizationServer.bo.dto.UserEntityDTO;
-import com.example.AuthorizationServer.services.UserService;
+import com.example.AuthorizationServer.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,32 +72,32 @@ public class UserController {
      * @return the response entity
      */
     @PostMapping("/")
-    public UserEntityDTO addUser(@RequestBody ExtendedUserEntityDTO userEntityDTO) {
+    public UserEntityDTO addUser(@RequestBody UserEntityExtendedDTO userEntityDTO) {
         return userService.addUser(role, userEntityDTO);
     }
 
     /**
      * Update a user entity with role USER
      *
-     * @param extendedUserEntityDTO the new version of the user entity
+     * @param userEntityExtendedDTO the new version of the user entity
      * @param id the id of the user entity to be updated
      * @return the response entity
      */
     @PutMapping("/{id}")
-    public UserEntityDTO updateUser(@RequestBody ExtendedUserEntityDTO extendedUserEntityDTO, @PathVariable Long id) {
-        return userService.updateUser(role, id, extendedUserEntityDTO);
+    public UserEntityDTO updateUser(@RequestBody UserEntityExtendedDTO userEntityExtendedDTO, @PathVariable Long id) {
+        return userService.updateUser(role, id, userEntityExtendedDTO);
     }
 
     /**
      * Change password for a user entity with role USER
      *
-     * @param extendedUserEntityDTO the user entity with updated password
+     * @param userEntityExtendedDTO the user entity with updated password
      * @param id the id of the user entity to be updated
      * @return the response entity
      */
     @PutMapping("/changePassword/{id}")
-    public UserEntityDTO updateUserPassword(@RequestBody ExtendedUserEntityDTO extendedUserEntityDTO, @PathVariable Long id) {
-        return userService.updatePassword(role, id, extendedUserEntityDTO);
+    public UserEntityDTO updateUserPassword(@RequestBody UserEntityExtendedDTO userEntityExtendedDTO, @PathVariable Long id) {
+        return userService.updatePassword(role, id, userEntityExtendedDTO);
     }
 
     // Remove this later?!

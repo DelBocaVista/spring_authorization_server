@@ -1,12 +1,11 @@
 package com.example.AuthorizationServer;
 
 import com.example.AuthorizationServer.bo.dto.OrganizationDTO;
-import com.example.AuthorizationServer.bo.dto.UserEntityDTO;
 import com.example.AuthorizationServer.bo.entity.Organization;
 import com.example.AuthorizationServer.bo.entity.UserEntity;
-import com.example.AuthorizationServer.repositories.OrganizationRepository;
-import com.example.AuthorizationServer.services.OrganizationService;
-import com.example.AuthorizationServer.services.UserService;
+import com.example.AuthorizationServer.repository.OrganizationRepository;
+import com.example.AuthorizationServer.service.OrganizationService;
+import com.example.AuthorizationServer.service.UserService;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;

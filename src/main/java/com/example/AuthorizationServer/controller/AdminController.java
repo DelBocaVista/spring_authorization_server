@@ -1,17 +1,14 @@
-package com.example.AuthorizationServer.controllers;
+package com.example.AuthorizationServer.controller;
 
-import com.example.AuthorizationServer.bo.dto.ExtendedUserEntityDTO;
-import com.example.AuthorizationServer.bo.dto.OrganizationDTO;
+import com.example.AuthorizationServer.bo.dto.UserEntityExtendedDTO;
 import com.example.AuthorizationServer.bo.dto.UserEntityDTO;
-import com.example.AuthorizationServer.bo.entity.Organization;
 import com.example.AuthorizationServer.bo.entity.UserEntity;
-import com.example.AuthorizationServer.services.OrganizationService;
-import com.example.AuthorizationServer.services.UserService;
+import com.example.AuthorizationServer.service.OrganizationService;
+import com.example.AuthorizationServer.service.UserService;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.expression.ParseException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -75,7 +72,7 @@ public class AdminController {
     }
 
     @PostMapping("/")
-    public UserEntityDTO addUser(@RequestBody ExtendedUserEntityDTO userEntity) {
+    public UserEntityDTO addUser(@RequestBody UserEntityExtendedDTO userEntity) {
         return userService.addUser(role, userEntity);
     }
 
@@ -85,7 +82,7 @@ public class AdminController {
     }
 
     @PutMapping("/changePassword/{id}")
-    public UserEntityDTO updateUserPassword(@RequestBody ExtendedUserEntityDTO userEntityDTO, @PathVariable Long id) {
+    public UserEntityDTO updateUserPassword(@RequestBody UserEntityExtendedDTO userEntityDTO, @PathVariable Long id) {
         return userService.updatePassword(role, id, userEntityDTO);
     }
 

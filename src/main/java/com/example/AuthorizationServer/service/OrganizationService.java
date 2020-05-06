@@ -1,10 +1,10 @@
-package com.example.AuthorizationServer.services;
+package com.example.AuthorizationServer.service;
 
 import com.example.AuthorizationServer.bo.dto.OrganizationDTO;
 import com.example.AuthorizationServer.bo.dto.OrganizationTreeNodeDTO;
 import com.example.AuthorizationServer.bo.entity.Organization;
-import com.example.AuthorizationServer.controllers.UserController;
-import com.example.AuthorizationServer.repositories.OrganizationRepository;
+import com.example.AuthorizationServer.controller.UserController;
+import com.example.AuthorizationServer.repository.OrganizationRepository;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +18,7 @@ import java.util.*;
 /**
  * @author Jonas Lundvall (jonlundv@kth.se)
  *
- * Service for handling retrieving, saving and updating organizations
+ * Service for handling retrieving, saving and updating organizations.
  */
 @Repository // Remove?
 @Transactional // Remove?
