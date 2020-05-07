@@ -93,7 +93,8 @@ public class OrganizationService {
     public OrganizationDTO addParentToOrganization(OrganizationDTO childDto, Long parentId) {
         Organization parent = this.getOrganizationById(parentId);
         Organization child = convertToEntity(childDto);
-        return this.addParentToOrganization(child, parent);
+        Organization childInDb = organizationRepository.save(child);
+        return this.addParentToOrganization(childInDb, parent);
     }
 
     public OrganizationDTO addParentToOrganization(Organization child, Organization parent) {
