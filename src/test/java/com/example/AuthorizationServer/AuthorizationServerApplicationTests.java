@@ -1,13 +1,9 @@
 package com.example.AuthorizationServer;
 
-import com.example.AuthorizationServer.bo.dto.OrganizationDTO;
-import com.example.AuthorizationServer.bo.entity.Organization;
-import com.example.AuthorizationServer.services.OrganizationService;
+import com.example.AuthorizationServer.service.OrganizationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-
-import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

@@ -1,9 +1,12 @@
 package com.example.AuthorizationServer.bo.dto;
 
-import com.example.AuthorizationServer.bo.entity.Organization;
-
 import java.util.Set;
 
+/**
+ * @author Jonas Lundvall (jonlundv@kth.se)
+ *
+ * Data transfer object for UserEntity.
+ */
 public class UserEntityDTO {
 
     // Properties ---------------------------------------------------------------------------------

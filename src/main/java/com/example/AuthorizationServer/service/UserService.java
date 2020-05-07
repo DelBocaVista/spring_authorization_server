@@ -1,11 +1,11 @@
-package com.example.AuthorizationServer.services;
+package com.example.AuthorizationServer.service;
 
 import com.example.AuthorizationServer.bo.dto.OrganizationDTO;
-import com.example.AuthorizationServer.bo.dto.ExtendedUserEntityDTO;
+import com.example.AuthorizationServer.bo.dto.UserEntityExtendedDTO;
 import com.example.AuthorizationServer.bo.dto.UserEntityDTO;
 import com.example.AuthorizationServer.bo.entity.Organization;
 import com.example.AuthorizationServer.bo.entity.UserEntity;
-import com.example.AuthorizationServer.repositories.UserEntityRepository;
+import com.example.AuthorizationServer.repository.UserEntityRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.expression.ParseException;
@@ -21,7 +21,7 @@ import java.util.*;
 /**
  * @author Jonas Lundvall (jonlundv@kth.se)
  *
- * Service for handling retrieving, saving and updating user entitys
+ * Service for handling retrieving, saving and updating user entities.
  */
 @Repository // Remove?
 @Transactional // Remove?
@@ -79,7 +79,7 @@ public class UserService {
         return userEntityDTOS;
     }
 
-    public UserEntityDTO addUser(String role, ExtendedUserEntityDTO userEntityDTO) {
+    public UserEntityDTO addUser(String role, UserEntityExtendedDTO userEntityDTO) {
         if (!userEntityDTO.getRole().equals(role))
             throw new UnauthorizedUserException("Not authorized to create a new user with this role");
         userEntityDTO.setPassword(new BCryptPasswordEncoder().encode(userEntityDTO.getPassword()));
@@ -112,20 +112,20 @@ public class UserService {
     }
 
     // Rewrite this with if checks to see what parameters are supposed to be updated?
-    public UserEntityDTO updateUser(String role, Long id, ExtendedUserEntityDTO extendedUserEntityDTO) {
+    public UserEntityDTO updateUser(String role, Long id, UserEntityExtendedDTO userEntityExtendedDTO) {
         Optional<UserEntity> optionalUser = userEntityRepository.findByRoleAndId(role, id);
         if (!optionalUser.isPresent())
             throw new NoSuchElementException(); // ?
         UserEntity updatedUserEntity = optionalUser.get();
-        updatedUserEntity.setUsername(extendedUserEntityDTO.getUsername());
-        updatedUserEntity.setFirstname(extendedUserEntityDTO.getFirstname());
-        updatedUserEntity.setLastname(extendedUserEntityDTO.getLastname());
-        updatedUserEntity.setPassword(extendedUserEntityDTO.getPassword());
-        updatedUserEntity.setRole(extendedUserEntityDTO.getRole());
-        updatedUserEntity.setEnabled(extendedUserEntityDTO.getEnabled());
+        updatedUserEntity.setUsername(userEntityExtendedDTO.getUsername());
+        updatedUserEntity.setFirstname(userEntityExtendedDTO.getFirstname());
+        updatedUserEntity.setLastname(userEntityExtendedDTO.getLastname());
+        updatedUserEntity.setPassword(userEntityExtendedDTO.getPassword());
+        updatedUserEntity.setRole(userEntityExtendedDTO.getRole());
+        updatedUserEntity.setEnabled(userEntityExtendedDTO.getEnabled());
 
         Set<Organization> organizations = new HashSet<>();
-        for (OrganizationDTO o: extendedUserEntityDTO.getOrganizations()) {
+        for (OrganizationDTO o: userEntityExtendedDTO.getOrganizations()) {
             organizations.add(convertToEntity(o));
         }
 
@@ -137,12 +137,12 @@ public class UserService {
         userEntityRepository.deleteByRoleAndId(role, id);
     }
 
-    public UserEntityDTO updatePassword(String role, Long id, ExtendedUserEntityDTO extendedUserEntityDTO) {
+    public UserEntityDTO updatePassword(String role, Long id, UserEntityExtendedDTO userEntityExtendedDTO) {
         Optional<UserEntity> optionalUser = userEntityRepository.findByRoleAndId(role, id);
         if (!optionalUser.isPresent())
             throw new NoSuchElementException(); // ?
         UserEntity updatedUserEntity = optionalUser.get();
-        updatedUserEntity.setPassword(extendedUserEntityDTO.getPassword());
+        updatedUserEntity.setPassword(userEntityExtendedDTO.getPassword());
         return convertUserEntityToDto(userEntityRepository.save(updatedUserEntity));
     }
 
@@ -229,7 +229,7 @@ public class UserService {
      * @param userEntityDto the user entity dto to convert
      * @return the corresponding user entity
      */
-    private UserEntity convertToEntity(ExtendedUserEntityDTO userEntityDto) throws ParseException {
+    private UserEntity convertToEntity(UserEntityExtendedDTO userEntityDto) throws ParseException {
         UserEntity newUser = modelMapper.map(userEntityDto, UserEntity.class);
         /*Optional<UserEntity> user = this.getUserById(userEntityDto.getId());
         return user.orElse(null);*/
