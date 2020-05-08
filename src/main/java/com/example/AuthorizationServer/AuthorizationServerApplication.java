@@ -48,11 +48,11 @@ public class AuthorizationServerApplication {
 			o3.setEnabled(true);
 
 			Organization o4 = new Organization();
-			o4.setName("4th Floor");
+			o4.setName("Teachers");
 			o4.setEnabled(true);
 
 			Organization o5 = new Organization();
-			o5.setName("5th Floor");
+			o5.setName("Students");
 			o5.setEnabled(true);
 
 			Organization o6 = new Organization();
@@ -156,6 +156,30 @@ public class AuthorizationServerApplication {
 			u9.setEnabled(true);
 			u9.setPassword("bjorn");
 
+			UserEntity u10 = new UserEntity();
+			u10.setUsername("pelle");
+			u10.setFirstname("Pelle");
+			u10.setLastname("McPelle");
+			u10.setRole("USER");
+			u10.setEnabled(true);
+			u10.setPassword("pelle");
+
+			UserEntity u11 = new UserEntity();
+			u11.setUsername("tuva");
+			u11.setFirstname("Tuva");
+			u11.setLastname("McTuva");
+			u11.setRole("USER");
+			u11.setEnabled(true);
+			u11.setPassword("tuva");
+
+			UserEntity u12 = new UserEntity();
+			u12.setUsername("meja");
+			u12.setFirstname("Meja");
+			u12.setLastname("McMeja");
+			u12.setRole("USER");
+			u12.setEnabled(true);
+			u12.setPassword("meja");
+
 
 			u2.addOrganization(o1);
 			u3.addOrganization(o6);
@@ -168,6 +192,11 @@ public class AuthorizationServerApplication {
 			u8.addOrganization(o6);
 			u8.addOrganization(o7);
 			u9.addOrganization(o8);
+			u10.addOrganization(o3);
+			u10.addOrganization(o2);
+			u11.addOrganization(o7);
+			u11.addOrganization(o8);
+			u12.addOrganization(o5);
 
 			userService.addUser(u1);
 			userService.addUser(u2);

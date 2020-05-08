@@ -22,6 +22,7 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
                 .cors()
                     .and()
                 .authorizeRequests()
+                    .antMatchers("/superadmin/**").hasAuthority("SUPERADMIN")
                     .antMatchers("/organization/**").hasAnyAuthority("ADMIN", "SUPERADMIN")
                     .antMatchers("/user/verify").permitAll()
                     .antMatchers("/user/**").hasAuthority("ADMIN")
