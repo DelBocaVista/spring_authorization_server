@@ -2,14 +2,24 @@ package com.example.AuthorizationServer.controller;
 
 import com.example.AuthorizationServer.bo.dto.OrganizationDTO;
 import com.example.AuthorizationServer.bo.dto.OrganizationTreeNodeDTO;
+import com.example.AuthorizationServer.security.CustomUserDetails;
 import com.example.AuthorizationServer.service.OrganizationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationDetails;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
+import java.security.Principal;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -62,6 +72,22 @@ public class OrganizationController {
         List<OrganizationTreeNodeDTO> tree = orgService.getOrganizationSubTree(id);
         return new ResponseEntity<>(tree, HttpStatus.OK);
     }
+    /*CustomUserDetails user = extractUserDetails(SecurityContextHolder.getContext());
+        List<OrganizationTreeNodeDTO> tree = orgService.getOrganizationSubTree(id);
+        System.out.println(tree.size());
+        for (OrganizationTreeNodeDTO node: tree) {
+            String[] pathArray = node.getPath().split("\\.");
+            System.out.println(node.getPath());
+            for (OrganizationDTO o: user.getOrganizations()) {
+                for (String s: pathArray) {
+                    System.out.println(o.getId() + " " + s);
+                    if(o.getId().toString().equals(s)) {
+                        return new ResponseEntity<>(tree, HttpStatus.OK);
+                    }
+                }
+            }
+        }
+        return new ResponseEntity<>(HttpStatus.FORBIDDEN);*/
 
     /**
      * Get a single organization by id
@@ -112,6 +138,10 @@ public class OrganizationController {
         orgService.deleteOrganization(id);
     }
 
+    private CustomUserDetails extractUserDetails(SecurityContext context) {
+        OAuth2AuthenticationDetails authentication = (OAuth2AuthenticationDetails) context.getAuthentication().getDetails();
+        return (CustomUserDetails) authentication.getDecodedDetails();
+    }
     /*private static List<TreeNode> buildTree(List<TreeNode> nodes) {
         HashMap<String, TreeNode> map = new HashMap<>();
         for (TreeNode n: nodes) {
