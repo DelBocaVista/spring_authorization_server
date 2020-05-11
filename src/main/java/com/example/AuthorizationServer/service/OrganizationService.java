@@ -5,17 +5,14 @@ import com.example.AuthorizationServer.bo.dto.OrganizationTreeNodeDTO;
 import com.example.AuthorizationServer.bo.entity.Organization;
 import com.example.AuthorizationServer.controller.UserController;
 import com.example.AuthorizationServer.repository.OrganizationRepository;
-import com.example.AuthorizationServer.security.CustomUserDetails;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.expression.ParseException;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.Principal;
 import java.util.*;
 
 /**
@@ -198,6 +195,20 @@ public class OrganizationService {
         return result;
     }
 
+    public boolean isRootOrganization(Long id) {
+        Optional<Organization> optionalOrganization = organizationRepository.findById(id);
+        if(!optionalOrganization.isPresent())
+            return false;
+
+        Organization organization = optionalOrganization.get();
+        String[] pathArray = organization.getPath().split("\\.");
+
+        if(pathArray.length > 1)
+            return false;
+
+        return true;
+    }
+
     public OrganizationDTO getRootParentOfOrganization(Long id) {
         Optional<Organization> optionalOrganization = organizationRepository.findById(id);
         if(!optionalOrganization.isPresent())
@@ -343,9 +354,9 @@ public class OrganizationService {
     }
 
     /**
-     * Convert user entity dto to user entity
-     * @param organizationDto the user entity dto to convert
-     * @return the corresponding user entity
+     * Convert organization dto to organization entity
+     * @param organizationDto the organization dto to convert
+     * @return the corresponding organization entity
      */
     private Organization convertToEntity(OrganizationDTO organizationDto) throws ParseException {
         Organization organization = modelMapper.map(organizationDto, Organization.class);

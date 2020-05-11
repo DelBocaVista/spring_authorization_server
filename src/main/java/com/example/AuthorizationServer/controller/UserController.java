@@ -1,13 +1,13 @@
 package com.example.AuthorizationServer.controller;
 
-import com.example.AuthorizationServer.bo.dto.OrganizationDTO;
 import com.example.AuthorizationServer.bo.dto.UserEntityExtendedDTO;
 import com.example.AuthorizationServer.bo.dto.UserEntityDTO;
+import com.example.AuthorizationServer.security.CustomUserDetails;
 import com.example.AuthorizationServer.service.UserService;
+import com.example.AuthorizationServer.utility.UserDetailExtractor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.EntityNotFoundException;
-import java.awt.image.BufferedImageFilter;
 import java.io.*;
 import java.util.*;
 
@@ -39,8 +38,8 @@ public class UserController {
     /**
      * Create multiple users by JSON array
      *
-     * @param userEntityExtendedDTOS
-     * @return
+     * @param userEntityExtendedDTOS the JSON array
+     * @return the response entity
      */
     @PostMapping("/upload/json/")
     public ResponseEntity<?> createUsersFromJSONArray(@RequestBody List<UserEntityExtendedDTO> userEntityExtendedDTOS) {
@@ -64,7 +63,7 @@ public class UserController {
     public ResponseEntity<?> createUsersFromCSVFile(@RequestParam("file") MultipartFile file) {
 
         if(file.isEmpty())
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>("Unexpected error. File is empty.", HttpStatus.NO_CONTENT);
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
 
@@ -72,18 +71,17 @@ public class UserController {
             String split = ",";
             List<UserEntityExtendedDTO> userEntityDTOS = new ArrayList<>();
 
-            // String firstname, String lastname, String username, String password, String role, Boolean enabled, Set<OrganizationDTO> organizations
             line = br.readLine();
             String[] headersInFile = line.split(split);
             String[] expectedHeaders = {"firstname", "lastname", "username", "password", "enabled"};
 
             if(headersInFile.length != expectedHeaders.length)
-                return new ResponseEntity<>("CSV file has wrong format.", HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>("Unexpected error during parsing. CSV file has wrong format.", HttpStatus.BAD_REQUEST);
 
             for (int i = 0; i < expectedHeaders.length; i++) {
                 System.out.println(headersInFile[i] + " " + expectedHeaders[i]);
                 if(!headersInFile[i].equals(expectedHeaders[i]))
-                    return new ResponseEntity<>("CSV file has wrong format.", HttpStatus.BAD_REQUEST);
+                    return new ResponseEntity<>("Unexpected error during parsing. CSV file has wrong format.", HttpStatus.BAD_REQUEST);
             }
 
             while ((line = br.readLine()) != null) {
@@ -111,7 +109,7 @@ public class UserController {
 
         } catch (Exception e) {
             logger.error(e.getMessage());
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Unexpected error. Could not read file.", HttpStatus.BAD_REQUEST);
         }
 
         return new ResponseEntity<>(HttpStatus.OK);
@@ -124,6 +122,8 @@ public class UserController {
      */
     @GetMapping("/")
     public Object getAllUsers() {
+        CustomUserDetails user = UserDetailExtractor.extract(SecurityContextHolder.getContext());
+
         List<UserEntityDTO> userEntities = userService.getAllActiveUsersByRole(role, SecurityContextHolder.getContext().getAuthentication());
         if (userEntities == null || userEntities.isEmpty()) {
             return new ResponseEntity(HttpStatus.NO_CONTENT);
@@ -181,22 +181,9 @@ public class UserController {
      * @param id the id of the user entity to be updated
      * @return the response entity
      */
-    @PutMapping("/changePassword/{id}")
+    @PutMapping("/{id}/changePassword/")
     public UserEntityDTO updateUserPassword(@RequestBody UserEntityExtendedDTO userEntityExtendedDTO, @PathVariable Long id) {
         return userService.updatePassword(role, id, userEntityExtendedDTO);
-    }
-
-    // Remove this later?!
-    /**
-     * Change role of a user entity with current role USER
-     *
-     * @param userEntityDTO the user entity with updated role
-     * @param id the id of the user entity to be updated
-     * @return the response entity
-     */
-    @PutMapping("/changeRole/{id}")
-    public UserEntityDTO updateUserRole(@RequestBody UserEntityDTO userEntityDTO, @PathVariable Long id) {
-        return userService.updateRole(role, id, userEntityDTO);
     }
 
     // Remove this later?!
@@ -217,5 +204,6 @@ public class UserController {
     public @ResponseBody boolean verifyToken(){
         return true;
     }
+
 
 }

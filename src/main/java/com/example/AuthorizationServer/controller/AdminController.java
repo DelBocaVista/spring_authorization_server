@@ -34,18 +34,20 @@ public class AdminController {
     @Autowired
     private UserService userService;
 
-    /*
-        Get all admins
+    /**
+     * Retrieve all admins
+     * @return
      */
     @GetMapping("admins/")
-    public List<UserEntityDTO> getAllAdmins() {
+    public ResponseEntity<?> getAllAdmins() {
         List<UserEntityDTO> userEntityDTOS = userService.getAllActiveUsersByRole(role, SecurityContextHolder.getContext().getAuthentication());
-        return userEntityDTOS;
+        return new ResponseEntity<>(userEntityDTOS, HttpStatus.OK);
     }
 
-    // ADD MORE FUNTIONALITY HERE!!
-    /*
-        Get single student by id
+    /**
+     *
+     * @param id
+     * @return
      */
     @GetMapping("admins/{id}")
     public ResponseEntity<UserEntityDTO> getAdminById(@PathVariable Long id) {
@@ -58,29 +60,56 @@ public class AdminController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        return new ResponseEntity<>(userEntityDTO, HttpStatus.OK); // Change this later (user.get())
+        return new ResponseEntity<>(userEntityDTO, HttpStatus.OK);
     }
 
+    /**
+     *
+     * @param userEntity
+     * @return
+     */
     @PostMapping("admins/")
     public UserEntityDTO addUser(@RequestBody UserEntityExtendedDTO userEntity) {
         return userService.addUser(role, userEntity);
     }
 
+    /**
+     *
+     * @param userEntity
+     * @param id
+     * @return
+     */
     @PutMapping("admins/{id}")
     public UserEntity updateUser(@RequestBody UserEntity userEntity, @PathVariable Long id) {
         return userService.updateUser(role, id, userEntity);
     }
 
+    /**
+     *
+     * @param userEntityDTO
+     * @param id
+     * @return
+     */
     @PutMapping("admins/changePassword/{id}")
     public UserEntityDTO updateUserPassword(@RequestBody UserEntityExtendedDTO userEntityDTO, @PathVariable Long id) {
         return userService.updatePassword(role, id, userEntityDTO);
     }
 
+    /**
+     *
+     * @param userEntityDTO
+     * @param id
+     * @return
+     */
     @PutMapping("admins/changeRole/{id}")
     public UserEntityDTO updateUserRole(@RequestBody UserEntityDTO userEntityDTO, @PathVariable Long id) {
         return userService.updateRole(role, id, userEntityDTO);
     }
 
+    /**
+     *
+     * @param id
+     */
     @DeleteMapping("admins/{id}")
     public void deleteUser(@PathVariable Long id) {
         userService.deleteUser(role, id);

@@ -69,6 +69,7 @@ public class UserService {
     }
 
     public List<UserEntityDTO> getAllActiveUsersByRole(String role, Authentication auth) {
+
         List<UserEntity> userEntities = userEntityRepository.findAllByRoleAndEnabled(role, true);
         List<UserEntityDTO> userEntityDTOS = new ArrayList<>();
 
