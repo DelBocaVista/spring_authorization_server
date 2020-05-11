@@ -166,8 +166,36 @@ public class OrganizationService {
         return orgDtos;
     }
 
-    public boolean isOrganizationChildOfParent(Long id, Long parentId) {
-        
+    public boolean isOrganizationChildOfRootParent(Long childId, Long parentId) {
+        Optional<Organization> optionalChild = organizationRepository.findById(childId);
+        if(!optionalChild.isPresent())
+            throw new NoSuchElementException();
+        Optional<Organization> optionalRoot = organizationRepository.findById(parentId);
+        if(!optionalRoot.isPresent())
+            throw new NoSuchElementException();
+
+        Organization child = optionalChild.get();
+        Organization root = optionalRoot.get();
+
+        String[] pathArray = child.getPath().split("\\.");
+
+        for (String s:pathArray) {
+            if(s.equals(parentId.toString()))
+                return true;
+        }
+
+        return false;
+    }
+
+    public List<OrganizationDTO> getAllRootOrganizations() {
+        List<OrganizationDTO> organizationDTOS = this.getAllOrganizations();
+        List<OrganizationDTO> result = new ArrayList<>();
+        for (OrganizationDTO o: organizationDTOS) {
+            String[] pathArray = o.getPath().split("\\.");
+            if(pathArray.length == 1)
+                result.add(o);
+        }
+        return result;
     }
 
     public OrganizationDTO getRootParentOfOrganization(Long id) {

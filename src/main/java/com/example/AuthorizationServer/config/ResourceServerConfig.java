@@ -22,11 +22,10 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
                 .cors()
                     .and()
                 .authorizeRequests()
-                    .antMatchers("/superadmin/**").hasAuthority("SUPERADMIN")
-                    .antMatchers("/organization/**").hasAnyAuthority("ADMIN", "SUPERADMIN")
-                    .antMatchers("/user/verify").permitAll()
-                    .antMatchers("/user/**").hasAuthority("ADMIN")
-                    .antMatchers("/admin/**").hasAuthority("SUPERADMIN")
+                    .antMatchers("/organizations/**").hasAnyAuthority("ADMIN", "SUPERADMIN")
+                    .antMatchers("/users/verify").hasAnyAuthority("USER", "ADMIN", "SUPERADMIN") // Maybe should be just USER?
+                    .antMatchers("/users/admins/**").hasAuthority("SUPERADMIN")
+                    .antMatchers("/users/**").hasAuthority("ADMIN")
                 .anyRequest().authenticated();
     }
 }

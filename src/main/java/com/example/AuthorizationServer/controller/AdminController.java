@@ -24,7 +24,7 @@ import java.util.*;
  */
 @SuppressWarnings("Duplicates")
 @RestController
-@RequestMapping(path="/admin")
+@RequestMapping("/users")
 public class AdminController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
@@ -34,36 +34,26 @@ public class AdminController {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private OrganizationService orgService;
-
-    @Autowired
-    private ModelMapper modelMapper = new ModelMapper();
-
     /*
         Get all admins
      */
-    @GetMapping("/")
-    public Object getAllAdmins() {
+    @GetMapping("admins/")
+    public List<UserEntityDTO> getAllAdmins() {
         List<UserEntityDTO> userEntityDTOS = userService.getAllActiveUsersByRole(role, SecurityContextHolder.getContext().getAuthentication());
-        if (userEntityDTOS == null || userEntityDTOS.isEmpty()) {
-            return new ResponseEntity(HttpStatus.NO_CONTENT);
-        }
-
-        return new ResponseEntity<>(userEntityDTOS, HttpStatus.OK);
+        return userEntityDTOS;
     }
 
     // ADD MORE FUNTIONALITY HERE!!
     /*
         Get single student by id
      */
-    @GetMapping("/{id}")
+    @GetMapping("admins/{id}")
     public ResponseEntity<UserEntityDTO> getAdminById(@PathVariable Long id) {
         UserEntityDTO userEntityDTO;
         try {
             logger.info("Fetching UserEntity with id {} and role ADMIN", id);
             userEntityDTO = userService.getUserByRoleAndId(role, id);
-        } catch (EntityNotFoundException e) {
+        } catch (Exception e) {
             logger.error("UserEntity with id {} and role {} not found.", id, role);
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -71,27 +61,27 @@ public class AdminController {
         return new ResponseEntity<>(userEntityDTO, HttpStatus.OK); // Change this later (user.get())
     }
 
-    @PostMapping("/")
+    @PostMapping("admins/")
     public UserEntityDTO addUser(@RequestBody UserEntityExtendedDTO userEntity) {
         return userService.addUser(role, userEntity);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("admins/{id}")
     public UserEntity updateUser(@RequestBody UserEntity userEntity, @PathVariable Long id) {
         return userService.updateUser(role, id, userEntity);
     }
 
-    @PutMapping("/changePassword/{id}")
+    @PutMapping("admins/changePassword/{id}")
     public UserEntityDTO updateUserPassword(@RequestBody UserEntityExtendedDTO userEntityDTO, @PathVariable Long id) {
         return userService.updatePassword(role, id, userEntityDTO);
     }
 
-    @PutMapping("/changeRole/{id}")
+    @PutMapping("admins/changeRole/{id}")
     public UserEntityDTO updateUserRole(@RequestBody UserEntityDTO userEntityDTO, @PathVariable Long id) {
         return userService.updateRole(role, id, userEntityDTO);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("admins/{id}")
     public void deleteUser(@PathVariable Long id) {
         userService.deleteUser(role, id);
     }

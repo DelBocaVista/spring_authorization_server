@@ -88,6 +88,18 @@ public class UserService {
         return convertUserEntityToDto(userEntityRepository.save(convertToEntity(userEntityDTO)));
     }
 
+    public void addUsers(List<UserEntityExtendedDTO> userEntityDTOS) {
+
+        List<UserEntity> userEntities = new ArrayList<>();
+
+        for (UserEntityExtendedDTO u: userEntityDTOS) {
+            UserEntity userEntity = convertToEntity(u);
+            userEntity.setPassword(new BCryptPasswordEncoder().encode(userEntity.getPassword()));
+            userEntities.add(userEntity);
+        }
+        userEntityRepository.saveAll(userEntities);
+    }
+
     // JUST FOR SEEDING - REMOVE LATER!!
     public UserEntity addUser(UserEntity userEntity) {
         System.out.println("koll:" + userEntity.toString());
