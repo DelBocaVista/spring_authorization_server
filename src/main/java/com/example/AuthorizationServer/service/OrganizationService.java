@@ -111,6 +111,16 @@ public class OrganizationService {
         return convertToDto(organizationRepository.save(childInDb));
     }
 
+    public List<OrganizationDTO> getAllRootParentOrganizations() {
+        // Only root parent organizations has just one id in path and therefore also no "." delimiter.
+        List<Organization> result = organizationRepository.findByPathNotContaining(".");
+        List<OrganizationDTO> resultDTO = new ArrayList<>();
+        for (Organization o: result) {
+            resultDTO.add(convertToDto(o));
+        }
+        return resultDTO;
+    }
+
     public List<OrganizationDTO> getAllChildrenOfOrganization(Long parentId) {
         Optional<Organization> optionalParent = organizationRepository.findById(parentId);
         if (!optionalParent.isPresent())
@@ -156,6 +166,24 @@ public class OrganizationService {
         return orgDtos;
     }
 
+    public boolean isOrganizationChildOfParent(Long id, Long parentId) {
+        
+    }
+
+    public OrganizationDTO getRootParentOfOrganization(Long id) {
+        Optional<Organization> optionalOrganization = organizationRepository.findById(id);
+        if(!optionalOrganization.isPresent())
+            throw new NoSuchElementException();
+        Organization organization = optionalOrganization.get();
+        String[] pathArray = organization.getPath().split("\\.");
+        Optional<Organization> optionalRootParent = organizationRepository.findById(Long.valueOf(pathArray[0]));
+        if(!optionalRootParent.isPresent())
+            throw new NoSuchElementException();
+        Organization rootParent = optionalRootParent.get();
+        return convertToDto(rootParent);
+    }
+
+    // Fix so that 1 and 10 doesnt get mixed up..
     public List<OrganizationTreeNodeDTO> getOrganizationSubTree(Long id) {
         List<Organization> organizations = organizationRepository.findByPathContainsOrderByPathAsc(id.toString());
         List<OrganizationDTO> organizationDTOS = new ArrayList<>();

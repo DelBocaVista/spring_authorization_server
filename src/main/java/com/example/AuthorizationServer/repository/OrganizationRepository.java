@@ -24,6 +24,8 @@ public interface OrganizationRepository extends CrudRepository<Organization, Str
 
     List<Organization> findByPathContains(String id);
 
+    List<Organization> findByPathNotContaining(String id);
+
     List<Organization> findByPathContainsOrderByPathAsc(String id);
 
     void deleteById(Long id);

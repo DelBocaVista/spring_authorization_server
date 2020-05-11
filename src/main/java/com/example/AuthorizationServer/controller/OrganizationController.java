@@ -2,6 +2,7 @@ package com.example.AuthorizationServer.controller;
 
 import com.example.AuthorizationServer.bo.dto.OrganizationDTO;
 import com.example.AuthorizationServer.bo.dto.OrganizationTreeNodeDTO;
+import com.example.AuthorizationServer.bo.entity.Organization;
 import com.example.AuthorizationServer.security.CustomUserDetails;
 import com.example.AuthorizationServer.service.OrganizationService;
 import org.slf4j.Logger;
@@ -9,24 +10,20 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationDetails;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
-import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
  * @author Jonas Lundvall (jonlundv@kth.se)
  *
- * Controller for REST API requests for UserEntity with role ADMIN
+ * Controller for REST API requests for organization. Used by both ADMIN and SUPERADMIN.
  */
 @SuppressWarnings("Duplicates")
 @RestController
@@ -37,6 +34,8 @@ public class OrganizationController {
 
     // String role = "ADMIN";
 
+
+    // Remove later - has moved to /superadmin
     @Autowired
     private OrganizationService orgService;
 
@@ -47,8 +46,31 @@ public class OrganizationController {
      */
     @GetMapping("/")
     public ResponseEntity<?> getAllOrganizations() {
+        CustomUserDetails user = extractUserDetails(SecurityContextHolder.getContext());
+        if(!user.getAuthorities().contains(new SimpleGrantedAuthority("SUPERADMIN")))
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         List<OrganizationDTO> organizationDTOS = orgService.getAllOrganizations();
         return new ResponseEntity<>(organizationDTOS, HttpStatus.OK);
+    }
+
+    /**
+     * Retrieve all root organisations
+     *
+     * @return the response entity
+     */
+    @GetMapping("/organization/root/")
+    public ResponseEntity<?> getAllRootOrganizations() {
+        CustomUserDetails user = extractUserDetails(SecurityContextHolder.getContext());
+        if(!user.getAuthorities().contains(new SimpleGrantedAuthority("SUPERADMIN")))
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        List<OrganizationDTO> organizationDTOS = orgService.getAllOrganizations();
+        List<OrganizationDTO> result = new ArrayList<>();
+        for (OrganizationDTO o: organizationDTOS) {
+            String[] pathArray = o.getPath().split("\\.");
+            if(pathArray.length == 1)
+                result.add(o);
+        }
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
     /**
@@ -57,20 +79,41 @@ public class OrganizationController {
      * @return the response entity
      */
     @GetMapping("/tree/")
-    public ResponseEntity<?> getOrganizationTree() {
+    public ResponseEntity<?> getFullOrganizationTree() {
+        CustomUserDetails user = extractUserDetails(SecurityContextHolder.getContext());
+        if(!user.getAuthorities().contains(new SimpleGrantedAuthority("SUPERADMIN")))
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         List<OrganizationTreeNodeDTO> tree = orgService.getFullOrganizationTree();
         return new ResponseEntity<>(tree, HttpStatus.OK);
     }
 
     /**
-     * Retrieve the full organization tree
+     * Retrieve the organization sub tree of given organization
      *
      * @return the response entity
      */
     @GetMapping("/tree/{id}")
     public ResponseEntity<?> getOrganizationSubTree(@PathVariable Long id) {
-        List<OrganizationTreeNodeDTO> tree = orgService.getOrganizationSubTree(id);
-        return new ResponseEntity<>(tree, HttpStatus.OK);
+        CustomUserDetails user = extractUserDetails(SecurityContextHolder.getContext());
+        boolean authorized = false;
+        if(user.getAuthorities().contains(new SimpleGrantedAuthority("SUPERADMIN"))) {
+            authorized = true;
+        } else {
+            try {
+                OrganizationDTO rootParent = orgService.getRootParentOfOrganization(id);
+                for (OrganizationDTO o : user.getOrganizations()) {
+                    if (o.getId().equals(rootParent.getId()))
+                        authorized = true;
+                }
+            } catch (NoSuchElementException e) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        }
+        if(authorized) {
+            List<OrganizationTreeNodeDTO> tree = orgService.getOrganizationSubTree(id);
+            return new ResponseEntity<>(tree, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
     }
     /*CustomUserDetails user = extractUserDetails(SecurityContextHolder.getContext());
         List<OrganizationTreeNodeDTO> tree = orgService.getOrganizationSubTree(id);
@@ -107,20 +150,62 @@ public class OrganizationController {
         return new ResponseEntity<>(organizationDTO, HttpStatus.OK);
     }
 
-
+    /**
+     * Add a new root organization.
+     * @param organizationDTO the dto of the organization to be created.
+     * @return the response entity.
+     */
     @PostMapping("/")
-    public OrganizationDTO addOrganization(@RequestBody OrganizationDTO organizationDto) {
-        return orgService.addOrganization(organizationDto);
+    public ResponseEntity<?> createRootOrganization(@RequestBody OrganizationDTO organizationDTO) {
+        CustomUserDetails user = extractUserDetails(SecurityContextHolder.getContext());
+        if(!user.getAuthorities().contains(new SimpleGrantedAuthority("SUPERADMIN")))
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        OrganizationDTO addedOrganization = orgService.addOrganization(organizationDTO);
+        return new ResponseEntity<>(addedOrganization, HttpStatus.OK);
     }
 
+    /**
+     * Add a new organization to a given parent.
+     * @param organizationDto the dto of the organization to be created.
+     * @param parentId the id of the intended parent.
+     * @return the response entity.
+     */
     @PostMapping("/{parentId}")
-    public OrganizationDTO addOrganizationToParent(@RequestBody OrganizationDTO organizationDto, @PathVariable Long parentId) {
-        return orgService.addParentToOrganization(organizationDto, parentId);
+    public ResponseEntity<?> createOrganizationToParent(@RequestBody OrganizationDTO organizationDto, @PathVariable Long parentId) {
+        CustomUserDetails user = extractUserDetails(SecurityContextHolder.getContext());
+        if(user.getAuthorities().contains(new SimpleGrantedAuthority("SUPERADMIN")))
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+
+        try {
+            OrganizationDTO rootParent = orgService.getRootParentOfOrganization(parentId);
+            for (OrganizationDTO o: user.getOrganizations()) {
+                if (o.getId().equals(rootParent.getId())) {
+                    OrganizationDTO orgInDb = orgService.addParentToOrganization(organizationDto, parentId);
+                    return new ResponseEntity<>(orgInDb, HttpStatus.OK);
+                }
+            }
+        } catch (NoSuchElementException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
     }
 
+    /**
+     *
+     * @param organizationDto
+     * @param id
+     * @return
+     */
     @PutMapping("/{id}")
-    public OrganizationDTO updateOrganization(@RequestBody OrganizationDTO organizationDto, @PathVariable Long id) {
-        return orgService.updateOrganization(id, organizationDto);
+    public ResponseEntity<?> updateOrganization(@RequestBody OrganizationDTO organizationDTO, @PathVariable Long id) {
+        CustomUserDetails userDetails = extractUserDetails(SecurityContextHolder.getContext());
+        if(userDetails.getAuthorities().contains(new SimpleGrantedAuthority("SUPERADMIN"))) {
+            OrganizationDTO rootParent = orgService.getRootParentOfOrganization(id);
+            if(!rootParent.getId().equals(id))
+                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        return orgService.updateOrganization(id, organizationDTO);
     }
 
     @PutMapping("/changeParent/{childId}/{parentId}")
@@ -142,6 +227,7 @@ public class OrganizationController {
         OAuth2AuthenticationDetails authentication = (OAuth2AuthenticationDetails) context.getAuthentication().getDetails();
         return (CustomUserDetails) authentication.getDecodedDetails();
     }
+
     /*private static List<TreeNode> buildTree(List<TreeNode> nodes) {
         HashMap<String, TreeNode> map = new HashMap<>();
         for (TreeNode n: nodes) {
