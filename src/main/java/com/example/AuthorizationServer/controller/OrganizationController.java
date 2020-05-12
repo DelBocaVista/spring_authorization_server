@@ -2,8 +2,6 @@ package com.example.AuthorizationServer.controller;
 
 import com.example.AuthorizationServer.bo.dto.OrganizationDTO;
 import com.example.AuthorizationServer.bo.dto.OrganizationTreeNodeDTO;
-import com.example.AuthorizationServer.bo.dto.UserEntityDTO;
-import com.example.AuthorizationServer.bo.entity.Organization;
 import com.example.AuthorizationServer.security.CustomUserDetails;
 import com.example.AuthorizationServer.service.OrganizationService;
 import com.example.AuthorizationServer.utility.UserDetailExtractor;

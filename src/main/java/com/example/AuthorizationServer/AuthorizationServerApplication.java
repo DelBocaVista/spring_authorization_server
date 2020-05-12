@@ -4,6 +4,7 @@ import com.example.AuthorizationServer.bo.dto.OrganizationDTO;
 import com.example.AuthorizationServer.bo.entity.Organization;
 import com.example.AuthorizationServer.bo.entity.UserEntity;
 import com.example.AuthorizationServer.repository.OrganizationRepository;
+import com.example.AuthorizationServer.repository.UserEntityRepository;
 import com.example.AuthorizationServer.service.OrganizationService;
 import com.example.AuthorizationServer.service.UserService;
 import org.springframework.beans.factory.InitializingBean;
@@ -19,6 +20,9 @@ public class AuthorizationServerApplication {
 
 	@Autowired
 	private UserService userService;
+
+	@Autowired
+	private UserEntityRepository userRep;
 
 	@Autowired
 	private OrganizationService orgService;
@@ -207,6 +211,13 @@ public class AuthorizationServerApplication {
 			userService.addUser(u7);
 			userService.addUser(u8);
 			userService.addUser(u9);
+
+			System.out.println("Get ");
+			Organization org = orgService.getOrganizationByIdSeed(2L);
+			List<UserEntity> res = userRep.findAllByOrganizationsContainsAndRoleAndEnabled(org, "USER", true);
+			for (UserEntity u: res) {
+				System.out.println(u.getUsername());
+			}
 			//orgService.addOrganization(o1);
 
 

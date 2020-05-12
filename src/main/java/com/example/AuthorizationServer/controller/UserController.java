@@ -41,10 +41,10 @@ public class UserController {
     private OrganizationService orgService;
 
     /**
-     * Create multiple users by JSON array
+     * Create multiple users by JSON array.
      *
-     * @param userEntityExtendedDTOS the JSON array
-     * @return the response entity
+     * @param userEntityExtendedDTOS the JSON array.
+     * @return the response entity.
      */
     @PostMapping("/upload/json/")
     public ResponseEntity<?> createUsersFromJSONArray(@RequestBody List<UserEntityExtendedDTO> userEntityExtendedDTOS) {
@@ -59,10 +59,10 @@ public class UserController {
 
 
     /**
-     * Create multiple users by csv file
+     * Create multiple users by csv file.
      *
-     * @param file the csv file
-     * @return the response entity
+     * @param file the csv file.
+     * @return the response entity.
      */
     @PostMapping("/upload/file/")
     public ResponseEntity<?> createUsersFromCSVFile(@RequestParam("file") MultipartFile file) {
@@ -81,11 +81,11 @@ public class UserController {
             String[] expectedHeaders = {"firstname", "lastname", "username", "password", "enabled", "organizations"};
 
             if(headersInFile.length != expectedHeaders.length)
-                return new ResponseEntity<>("1Unexpected error during parsing. CSV file has wrong format.", HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>("Unexpected error during parsing. CSV file has wrong format.", HttpStatus.BAD_REQUEST);
 
             for (int i = 0; i < expectedHeaders.length; i++) {
                 if(!headersInFile[i].equals(expectedHeaders[i]))
-                    return new ResponseEntity<>("2Unexpected error during parsing. CSV file has wrong format.", HttpStatus.BAD_REQUEST);
+                    return new ResponseEntity<>("Unexpected error during parsing. CSV file has wrong format.", HttpStatus.BAD_REQUEST);
             }
 
             HashMap<String, OrganizationDTO> fetchedOrganizations = new HashMap<>();
@@ -107,18 +107,29 @@ public class UserController {
                 Set<OrganizationDTO> organizations = new HashSet<>();
 
                 while (i < userArray.length) {
-                    // Handle adding organizations
+
                     if(fetchedOrganizations.containsKey(userArray[i])) {
                         organizations.add(fetchedOrganizations.get(userArray[i]));
                     } else {
                         OrganizationDTO organizationDTO = orgService.getOrganizationByName(userArray[i]);
+
                         if(organizationDTO == null)
-                            return new ResponseEntity<>("3Unexpected error during parsing. CSV file has wrong format.", HttpStatus.BAD_REQUEST);
+                            return new ResponseEntity<>("Unexpected error during parsing. CSV file has wrong format.", HttpStatus.BAD_REQUEST);
+
+                        for (OrganizationDTO o: user.getOrganizations()) {
+                            // Admin is only allowed to add users to organizations within its own organization tree
+                            if(orgService.isOrganizationChildOfRootParent(organizationDTO.getId(), o.getId()))
+                                return new ResponseEntity<>("Unexpected error. Not authorized.", HttpStatus.UNAUTHORIZED);
+
+                        }
+
                         fetchedOrganizations.put(userArray[i], organizationDTO);
                         organizations.add(organizationDTO);
                     }
+
                     i++;
                 }
+
                 user.setOrganizations(organizations);
 
                 userEntityDTOS.add(user);
@@ -128,14 +139,14 @@ public class UserController {
 
         } catch (Exception e) {
             logger.error(e.getMessage());
-            return new ResponseEntity<>("4Unexpected error. Could not read file.", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Unexpected error. Could not read file.", HttpStatus.BAD_REQUEST);
         }
 
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     /**
-     * Retrieve all user entities with role USER
+     * Retrieve all user entities with user role
      *
      * @return the response entity
      */
@@ -151,7 +162,7 @@ public class UserController {
     }
 
     /**
-     * Get a single user entity with role USER by id
+     * Get a single user entity with user role by id
      *
      * @param id the user entity id
      * @return the response entity
