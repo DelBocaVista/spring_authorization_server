@@ -1,8 +1,10 @@
 package com.example.AuthorizationServer.controller;
 
+import com.example.AuthorizationServer.bo.dto.OrganizationDTO;
 import com.example.AuthorizationServer.bo.dto.UserEntityExtendedDTO;
 import com.example.AuthorizationServer.bo.dto.UserEntityDTO;
 import com.example.AuthorizationServer.security.CustomUserDetails;
+import com.example.AuthorizationServer.service.OrganizationService;
 import com.example.AuthorizationServer.service.UserService;
 import com.example.AuthorizationServer.utility.UserDetailExtractor;
 import org.slf4j.Logger;
@@ -34,6 +36,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private OrganizationService orgService;
 
     /**
      * Create multiple users by JSON array
@@ -73,16 +78,17 @@ public class UserController {
 
             line = br.readLine();
             String[] headersInFile = line.split(split);
-            String[] expectedHeaders = {"firstname", "lastname", "username", "password", "enabled"};
+            String[] expectedHeaders = {"firstname", "lastname", "username", "password", "enabled", "organizations"};
 
             if(headersInFile.length != expectedHeaders.length)
-                return new ResponseEntity<>("Unexpected error during parsing. CSV file has wrong format.", HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>("1Unexpected error during parsing. CSV file has wrong format.", HttpStatus.BAD_REQUEST);
 
             for (int i = 0; i < expectedHeaders.length; i++) {
-                System.out.println(headersInFile[i] + " " + expectedHeaders[i]);
                 if(!headersInFile[i].equals(expectedHeaders[i]))
-                    return new ResponseEntity<>("Unexpected error during parsing. CSV file has wrong format.", HttpStatus.BAD_REQUEST);
+                    return new ResponseEntity<>("2Unexpected error during parsing. CSV file has wrong format.", HttpStatus.BAD_REQUEST);
             }
+
+            HashMap<String, OrganizationDTO> fetchedOrganizations = new HashMap<>();
 
             while ((line = br.readLine()) != null) {
                 String[] userArray = line.split(split);
@@ -97,10 +103,23 @@ public class UserController {
                 user.setRole("USER");
                 user.setEnabled(new Boolean(userArray[i++]));
 
-                // HOW TO HANDLE ORGANIZATIONS?
-                /*while (i < userArray.length) {
-                    // Handle adding organizations?
-                }*/
+                // All the following columns are expected to be names of existing organizations.
+                Set<OrganizationDTO> organizations = new HashSet<>();
+
+                while (i < userArray.length) {
+                    // Handle adding organizations
+                    if(fetchedOrganizations.containsKey(userArray[i])) {
+                        organizations.add(fetchedOrganizations.get(userArray[i]));
+                    } else {
+                        OrganizationDTO organizationDTO = orgService.getOrganizationByName(userArray[i]);
+                        if(organizationDTO == null)
+                            return new ResponseEntity<>("3Unexpected error during parsing. CSV file has wrong format.", HttpStatus.BAD_REQUEST);
+                        fetchedOrganizations.put(userArray[i], organizationDTO);
+                        organizations.add(organizationDTO);
+                    }
+                    i++;
+                }
+                user.setOrganizations(organizations);
 
                 userEntityDTOS.add(user);
             }
@@ -109,7 +128,7 @@ public class UserController {
 
         } catch (Exception e) {
             logger.error(e.getMessage());
-            return new ResponseEntity<>("Unexpected error. Could not read file.", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("4Unexpected error. Could not read file.", HttpStatus.BAD_REQUEST);
         }
 
         return new ResponseEntity<>(HttpStatus.OK);
