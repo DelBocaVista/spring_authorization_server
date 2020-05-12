@@ -27,6 +27,7 @@ public class CustomTokenConverter extends JwtAccessTokenConverter {
 
         Map<String, Object> additionalInfo = new HashMap<>();
         additionalInfo.put("orgs", user.getOrganizations());
+        additionalInfo.put("id", user.getId());
         ((DefaultOAuth2AccessToken) accessToken).setAdditionalInformation(additionalInfo);
 
         accessToken = super.enhance(accessToken, authentication);
@@ -49,13 +50,14 @@ public class CustomTokenConverter extends JwtAccessTokenConverter {
         }
 
         String name = (String) map.get("user_name");
+        Long id = Long.valueOf((Integer) map.get("id"));
         ArrayList<String> authorities = (ArrayList<String>) map.get("authorities");
         List<GrantedAuthority> auths = new ArrayList<>();
         for (String s: authorities) {
             auths.add(new SimpleGrantedAuthority(s));
         }
 
-        CustomUserDetails user = new CustomUserDetails(name, "", auths, orgs);
+        CustomUserDetails user = new CustomUserDetails(name, "", auths, id, orgs);
         authentication.setDetails(user);
 
         return authentication;

@@ -42,7 +42,8 @@ public class CustomUserDetailsService implements UserDetailsService {
             organizationDTOS.add(convertToDto(o));
         }
 
-        return new CustomUserDetails(userEntity.getUsername(), userEntity.getPassword(), Arrays.asList(authority), organizationDTOS);
+        return new CustomUserDetails(userEntity.getUsername(), userEntity.getPassword(), Arrays.asList(authority),
+                userEntity.getId(), organizationDTOS);
     }
 
     private OrganizationDTO convertToDto(Organization organization) {

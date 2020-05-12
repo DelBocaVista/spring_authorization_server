@@ -14,9 +14,13 @@ import java.util.Collection;
 public class CustomUserDetails extends User {
 
     // Properties ---------------------------------------------------------------------------------
+    private Long id;
     private Collection<OrganizationDTO> organizations;
 
     // Getters/setters ----------------------------------------------------------------------------
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
     public Collection<OrganizationDTO> getOrganizations() { return organizations; }
     public void setOrganizations(Collection<OrganizationDTO> organizations) { this.organizations = organizations; }
 
@@ -25,8 +29,9 @@ public class CustomUserDetails extends User {
         super(username, password, authorities);
     }
 
-    public CustomUserDetails(String username, String password, Collection<? extends GrantedAuthority> authorities, Collection<OrganizationDTO> organizations) {
+    public CustomUserDetails(String username, String password, Collection<? extends GrantedAuthority> authorities, Long id, Collection<OrganizationDTO> organizations) {
         super(username, password, authorities);
+        this.id = id;
         this.organizations = organizations;
     }
 

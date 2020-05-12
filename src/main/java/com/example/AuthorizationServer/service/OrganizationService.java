@@ -177,7 +177,7 @@ public class OrganizationService {
         String[] pathArray = child.getPath().split("\\.");
 
         for (String s:pathArray) {
-            if(s.equals(parentId.toString()))
+            if(s.equals(root.getId().toString()))
                 return true;
         }
 

@@ -2,6 +2,8 @@ package com.example.AuthorizationServer.controller;
 
 import com.example.AuthorizationServer.bo.dto.OrganizationDTO;
 import com.example.AuthorizationServer.bo.dto.OrganizationTreeNodeDTO;
+import com.example.AuthorizationServer.bo.dto.UserEntityDTO;
+import com.example.AuthorizationServer.bo.entity.Organization;
 import com.example.AuthorizationServer.security.CustomUserDetails;
 import com.example.AuthorizationServer.service.OrganizationService;
 import com.example.AuthorizationServer.utility.UserDetailExtractor;
@@ -33,9 +35,9 @@ public class OrganizationController {
     private OrganizationService orgService;
 
     /**
-     * Retrieve all organisations
+     * Retrieve all organisations.
      *
-     * @return the response entity
+     * @return the response entity.
      */
     @GetMapping("/")
     public ResponseEntity<?> getAllOrganizations() {
@@ -50,9 +52,9 @@ public class OrganizationController {
     }
 
     /**
-     * Retrieve all root organisations
+     * Retrieve all root organizations.
      *
-     * @return the response entity
+     * @return the response entity.
      */
     @GetMapping("/roots/")
     public ResponseEntity<?> getAllRootOrganizations() {
@@ -67,9 +69,9 @@ public class OrganizationController {
     }
 
     /**
-     * Retrieve the full organization tree
+     * Retrieve the full organization tree.
      *
-     * @return the response entity
+     * @return the response entity.
      */
     @GetMapping("/trees/")
     public ResponseEntity<?> getFullOrganizationTree() {
@@ -84,9 +86,9 @@ public class OrganizationController {
     }
 
     /**
-     * Retrieve the organization sub tree of given organization
+     * Retrieve the organization sub tree of given organization.
      *
-     * @return the response entity
+     * @return the response entity.
      */
     @GetMapping("/trees/{id}")
     public ResponseEntity<?> getOrganizationSubTree(@PathVariable Long id) {
@@ -119,30 +121,31 @@ public class OrganizationController {
     }
 
     /**
-     * Get a single organization by id
+     * Get a single organization by id.
      *
-     * @param id the organization id
-     * @return the response entity
+     * @param id the organization id.
+     * @return the response entity.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<OrganizationDTO> getOrganizationById(@PathVariable Long id) {
+    public ResponseEntity<?> getOrganizationById(@PathVariable Long id) {
         CustomUserDetails user = UserDetailExtractor.extract((SecurityContextHolder.getContext()));
 
         boolean authorized = false;
 
         if(user.getAuthorities().contains(new SimpleGrantedAuthority("SUPERADMIN"))) {
-
             // Superadmin is only authorized to retrieve root organizations
             if(orgService.isRootOrganization(id))
                 authorized = true;
-
         } else {
-
             // Admin is only authorized to retrieve organizations within its own root organization sub tree
-            
+            for (OrganizationDTO o: user.getOrganizations()) {
+                if(orgService.isOrganizationChildOfRootParent(id, o.getId()))
+                    authorized = true;
+            }
         }
 
-
+        if (!authorized)
+            return new ResponseEntity<>("Unexpected error. Not authorized.", HttpStatus.UNAUTHORIZED);
 
         OrganizationDTO organizationDTO;
         try {
@@ -156,70 +159,82 @@ public class OrganizationController {
 
     /**
      * Add a new root organization.
+     *
      * @param organizationDTO the dto of the organization to be created.
      * @return the response entity.
      */
     @PostMapping("/")
     public ResponseEntity<?> createRootOrganization(@RequestBody OrganizationDTO organizationDTO) {
         CustomUserDetails user = UserDetailExtractor.extract((SecurityContextHolder.getContext()));
-        if(!user.getAuthorities().contains(new SimpleGrantedAuthority("SUPERADMIN")))
+
+        if(!user.getAuthorities().contains(new SimpleGrantedAuthority("SUPERADMIN"))) {
+            // Only superadmin is allowed to create root organizations
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+
         OrganizationDTO addedOrganization = orgService.addOrganization(organizationDTO);
         return new ResponseEntity<>(addedOrganization, HttpStatus.OK);
     }
 
     /**
      * Add a new organization to a given parent.
+     *
      * @param organizationDto the dto of the organization to be created.
      * @param parentId the id of the intended parent.
      * @return the response entity.
      */
     @PostMapping("/{parentId}")
-    public ResponseEntity<?> createSubOrganizationToParent(@RequestBody OrganizationDTO organizationDto, @PathVariable Long parentId) {
+    public ResponseEntity<?> createSubOrganizationToParent(@RequestBody OrganizationDTO organizationDto,
+                                                           @PathVariable Long parentId) {
         CustomUserDetails user = UserDetailExtractor.extract((SecurityContextHolder.getContext()));
-        // Resource is not allowed for superadmin
-        if(user.getAuthorities().contains(new SimpleGrantedAuthority("SUPERADMIN")))
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        // User must be admin - check if they have authority over root parent of given organization
+
+        if(user.getAuthorities().contains(new SimpleGrantedAuthority("SUPERADMIN"))) {
+            // Superadmin is not allowed to create sub organizations
+            return new ResponseEntity<>("Unexpected error. Not authorized.", HttpStatus.UNAUTHORIZED);
+        }
+
         try {
-            // Get root parent to given parentId
             OrganizationDTO rootParent = orgService.getRootParentOfOrganization(parentId);
-            // Check if admins organization is the same as root parent
+            // Admin is only authorized to create sub organizations in own root parent organization
             for (OrganizationDTO o: user.getOrganizations()) {
                 if (o.getId().equals(rootParent.getId())) {
-                    // Admin has authority in organization tree - create suborganization
                     OrganizationDTO orgInDb = orgService.addParentToOrganization(organizationDto, parentId);
                     return new ResponseEntity<>(orgInDb, HttpStatus.OK);
                 }
             }
         } catch (NoSuchElementException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("Unexpected error. Organization not found.", HttpStatus.NOT_FOUND);
         }
 
-        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        return new ResponseEntity<>("Unexpected error. Not authorized.", HttpStatus.UNAUTHORIZED);
     }
 
     /**
-     *
-     * @param organizationDTO
-     * @param id
-     * @return
+     * Update an existing organization.
+     * @param organizationDTO the updated dto of the organization.
+     * @param id the id of the organization.
+     * @return the response entity.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateOrganization(@RequestBody OrganizationDTO organizationDTO, @PathVariable Long id) {
+    public ResponseEntity<?> updateOrganization(@RequestBody OrganizationDTO organizationDTO,
+                                                @PathVariable Long id) {
         CustomUserDetails userDetails = UserDetailExtractor.extract(SecurityContextHolder.getContext());
+
         OrganizationDTO rootParent;
         boolean authorized = false;
+
         if(userDetails.getAuthorities().contains(new SimpleGrantedAuthority("SUPERADMIN"))) {
-            // Superadmin users are only allowed to update root organizations
+            // Superadmin is only allowed to update root organizations
             rootParent = orgService.getRootParentOfOrganization(id);
+
             if(!rootParent.getId().equals(id))
-                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+                return new ResponseEntity<>("Unexpected error. Not authorized.", HttpStatus.UNAUTHORIZED);
             else
                 authorized = true;
+
         } else {
-            // Admin users are only allowed to update suborganizations of own root organization
             rootParent = orgService.getRootParentOfOrganization(id);
+            // Admin is only authorized to update organizations in its own organization sub tree
             for (OrganizationDTO o: userDetails.getOrganizations()) {
                 if(rootParent.getId().equals(o.getId()))
                     authorized = true;
@@ -230,58 +245,108 @@ public class OrganizationController {
             OrganizationDTO updatedOrganizationDTO = orgService.updateOrganization(id, organizationDTO);
             return new ResponseEntity<>(updatedOrganizationDTO, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>("Unexpected error. Not authorized.", HttpStatus.UNAUTHORIZED);
         }
     }
 
+    /**
+     * Change the parent of an existing organization.
+     *
+     * @param childId the id of the organization changing parent organizations.
+     * @param parentId the id of the new parent organization.
+     * @return the response entity.
+     */
     @PutMapping("/{childId}/changeParent/{parentId}")
-    public OrganizationDTO updateOrganizationParent(@PathVariable Long childId, @PathVariable Long parentId) {
-        return orgService.addParentToOrganization(childId, parentId);
-    }
+    public ResponseEntity<?> updateOrganizationParent(@PathVariable Long childId, @PathVariable Long parentId) {
+        CustomUserDetails user = UserDetailExtractor.extract(SecurityContextHolder.getContext());
 
-    @GetMapping("{id}/children/")
-    public List<OrganizationDTO> getAllChildrenOfOrganization(@PathVariable Long id) {
-        return orgService.getAllChildrenOfOrganization(id);
-    }
-
-    @DeleteMapping("/{id}")
-    public void deleteOrganization(@PathVariable Long id) {
-        orgService.deleteOrganization(id);
-    }
-
-
-
-    /*private static List<TreeNode> buildTree(List<TreeNode> nodes) {
-        HashMap<String, TreeNode> map = new HashMap<>();
-        for (TreeNode n: nodes) {
-            map.put(n.id.toString(), n);
+        if(user.getAuthorities().contains(new SimpleGrantedAuthority("SUPERADMIN"))) {
+            // Superadmin is not allowed to create sub organizations
+            return new ResponseEntity<>("Unexpected error. Not authorized.", HttpStatus.UNAUTHORIZED);
         }
-        List<TreeNode> tree = new ArrayList<>();
-        for (TreeNode n: nodes) {
-            String[] path = n.path.split("\\.");
-            if (path.length == 1) {
-                tree.add(n);
-            } else {
-                // find nearest parent
-                TreeNode parent = map.get(path[path.length - 2]);
-                // add self as child
-                parent.subOrganizations.add(n);
+
+        boolean childAuthorized = false;
+        boolean parentAuthorized = false;
+        // Admin is only authorized to update organizations in its own organization sub tree
+        OrganizationDTO rootParent = orgService.getRootParentOfOrganization(childId);
+        for (OrganizationDTO o: user.getOrganizations()) {
+            if(rootParent.getId().equals(o.getId()))
+                childAuthorized = true;
+            if(o.getId().equals(parentId))
+                parentAuthorized = true;
+        }
+
+        if(!childAuthorized || !parentAuthorized)
+            return new ResponseEntity<>("Unexpected error. Not authorized.", HttpStatus.UNAUTHORIZED);
+
+        OrganizationDTO updatedOrganization = orgService.addParentToOrganization(childId, parentId);
+
+        return new ResponseEntity<>(updatedOrganization, HttpStatus.OK);
+    }
+
+    /**
+     * Get all the children of an organization.
+     *
+     * @param id the id of the organization.
+     * @return the response entity.
+     */
+    @GetMapping("{id}/children/")
+    public ResponseEntity<?> getAllChildrenOfOrganization(@PathVariable Long id) {
+        CustomUserDetails user = UserDetailExtractor.extract(SecurityContextHolder.getContext());
+
+        if(user.getAuthorities().contains(new SimpleGrantedAuthority("SUPERADMIN"))) {
+            // Superadmin is not allowed to fetch sub organizations
+            return new ResponseEntity<>("Unexpected error. Not authorized.", HttpStatus.UNAUTHORIZED);
+        }
+
+        OrganizationDTO rootParent = orgService.getRootParentOfOrganization(id);
+        // Admin is only authorized to update organizations in its own organization sub tree
+        for (OrganizationDTO o: user.getOrganizations()) {
+            if(rootParent.getId().equals(o.getId())) {
+                List<OrganizationDTO> children = orgService.getAllChildrenOfOrganization(id);
+                return new ResponseEntity<>(children, HttpStatus.OK);
             }
         }
-        return tree;
+
+        return new ResponseEntity<>("Unexpected error. Not authorized.", HttpStatus.UNAUTHORIZED);
     }
 
-    private class TreeNode {
+    /**
+     * Delete an organization.
+     *
+     * @param id the id of the organization to be deleted.
+     * @return  the response entity.
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteOrganization(@PathVariable Long id) {
+        CustomUserDetails userDetails = UserDetailExtractor.extract(SecurityContextHolder.getContext());
 
-        Long id;
-        String name;
-        String path;
-        Boolean enabled;
-        List<TreeNode> subOrganizations;
+        OrganizationDTO rootParent;
+        boolean authorized = false;
 
-        TreeNode() {
-            subOrganizations = new ArrayList<>();
+        if(userDetails.getAuthorities().contains(new SimpleGrantedAuthority("SUPERADMIN"))) {
+            // Superadmin is only allowed to delete root organizations
+            rootParent = orgService.getRootParentOfOrganization(id);
+
+            if(!rootParent.getId().equals(id))
+                return new ResponseEntity<>("Unexpected error. Not authorized.", HttpStatus.UNAUTHORIZED);
+            else
+                authorized = true;
+
+        } else {
+            rootParent = orgService.getRootParentOfOrganization(id);
+            // Admin is only authorized to delete organizations in its own organization sub tree
+            for (OrganizationDTO o: userDetails.getOrganizations()) {
+                if(rootParent.getId().equals(o.getId()))
+                    authorized = true;
+            }
         }
-    }*/
 
+        if(authorized) {
+            orgService.deleteOrganization(id);
+            return new ResponseEntity<>("Successfully deleted rganization with id " + id + ".", HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("Unexpected error. Not authorized.", HttpStatus.UNAUTHORIZED);
+        }
+    }
 }
