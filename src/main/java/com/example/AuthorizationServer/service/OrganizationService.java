@@ -118,6 +118,12 @@ public class OrganizationService {
         return resultDTO;
     }
 
+    /**
+     * Returns all the sub organizations of a given parent.
+     *
+     * @param parentId the id of the parent organization.
+     * @return the sub organizations of the parent.
+     */
     public List<OrganizationDTO> getAllChildrenOfOrganization(Long parentId) {
         Optional<Organization> optionalParent = organizationRepository.findById(parentId);
         if (!optionalParent.isPresent())

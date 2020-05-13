@@ -54,4 +54,20 @@ public class UserEntityDTO {
         this.enabled = enabled;
         this.organizations = organizations;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj == null)
+            return false;
+        if(!(obj instanceof UserEntityDTO))
+            return false;
+
+        UserEntityDTO other = (UserEntityDTO) obj;
+        return this.id == other.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) id.intValue() * firstname.hashCode() * lastname.hashCode();
+    }
 }

@@ -35,6 +35,9 @@ public class UserService {
     private OrganizationRepository orgRepository;
 
     @Autowired
+    private OrganizationService orgService;
+
+    @Autowired
     private ModelMapper modelMapper = new ModelMapper();
 
     // IS ONLY USED BY USERDETAILSSERVICE AND SEED DATABASE!!! - REMOVE LATER?
@@ -184,6 +187,39 @@ public class UserService {
             resultDTOs.add(convertUserEntityToDto(u));
         }
         return resultDTOs;
+    }
+
+    public List<UserEntityDTO> getAllUsersByRootOrganization(Long organizationId) {
+
+        if(!orgService.isRootOrganization(organizationId))
+            throw new NoSuchElementException();
+
+        Optional<Organization> optionalOrganization = orgRepository.findById(organizationId);
+
+        if(!optionalOrganization.isPresent())
+            throw new NoSuchElementException();
+
+        Organization organization = optionalOrganization.get();
+
+        List<OrganizationDTO> subOrganizations = orgService.getAllChildrenOfOrganization(organization.getId());
+
+        Set<UserEntityDTO> users = new HashSet<>();
+
+        // Add root organization members
+        List<UserEntityDTO> rootMembers = this.getAllUsersByOrganization(organization.getId());
+        users.addAll(rootMembers);
+
+        for (OrganizationDTO o: subOrganizations) {
+            Optional<Organization> optional = orgRepository.findById(o.getId());
+            if(!optional.isPresent())
+                throw new NoSuchElementException();
+            List<UserEntityDTO> members = this.getAllUsersByOrganization(o.getId());
+            users.addAll(members);
+        }
+
+        List<UserEntityDTO> result = new ArrayList<>(users);
+
+        return result;
     }
 
     /**

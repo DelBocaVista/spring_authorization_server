@@ -61,11 +61,9 @@ public class UserController {
 
         List<UserEntityDTO> userEntities;
 
-        // REDO!!!!
-
         // Admin is only authorized to fetch users with membership in sub organizations of its own root organization
         try {
-            userEntities = userService.getAllUsersByOrganization(adminOrganization.getId());
+            userEntities = userService.getAllUsersByRootOrganization(adminOrganization.getId());
         } catch (Exception e) {
             logger.error(e.getMessage());
             return new ResponseEntity<>("Unexpected error. Organization not found.", HttpStatus.NOT_FOUND);
@@ -302,7 +300,7 @@ public class UserController {
                             return new ResponseEntity<>("Unexpected error during parsing. CSV file has wrong format.", HttpStatus.BAD_REQUEST);
 
                         // Admin is only allowed to add users to organizations within its own organization tree
-                        if(orgService.isOrganizationChildOfRootParent(organizationDTO.getId(), adminOrganization.getId()))
+                        if(!orgService.isOrganizationChildOfRootParent(organizationDTO.getId(), adminOrganization.getId()))
                             return new ResponseEntity<>("Unexpected error. Not authorized to create user in organization.", HttpStatus.UNAUTHORIZED);
 
 
