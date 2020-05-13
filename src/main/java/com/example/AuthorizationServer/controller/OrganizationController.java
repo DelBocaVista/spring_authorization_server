@@ -20,14 +20,16 @@ import java.util.NoSuchElementException;
 /**
  * @author Jonas Lundvall (jonlundv@kth.se)
  *
- * Controller for REST API requests for organization. Used by both ADMIN and SUPERADMIN.
+ * Controller for REST API requests for organizations. Both admin and superadmin roles has access to this
+ * resource. General access is upheld through http security configuration in ResourceServerConfig. Any endpoint specific
+ * access rules are implemented in their respective methods.
  */
 @SuppressWarnings("Duplicates")
 @RestController
 @RequestMapping(path="/organizations")
 public class OrganizationController {
 
-    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+    private static final Logger logger = LoggerFactory.getLogger(OrganizationController.class);
 
     @Autowired
     private OrganizationService orgService;
@@ -298,7 +300,7 @@ public class OrganizationController {
         }
 
         OrganizationDTO rootParent = orgService.getRootParentOfOrganization(id);
-        // Admin is only authorized to update organizations in its own organization sub tree
+        // Admin is only authorized to view organizations in its own organization sub tree
         for (OrganizationDTO o: user.getOrganizations()) {
             if(rootParent.getId().equals(o.getId())) {
                 List<OrganizationDTO> children = orgService.getAllChildrenOfOrganization(id);

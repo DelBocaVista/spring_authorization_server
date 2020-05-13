@@ -23,7 +23,9 @@ import java.util.*;
 /**
  * @author Jonas Lundvall (jonlundv@kth.se), Gustav Kavtaradze (guek@kth.se)
  *
- * Controller for REST API requests for user entities with role USER
+ * Controller for REST API requests for user entities with user role. Only the admin role has access to this
+ * resource. General access is upheld through http security configuration in ResourceServerConfig. Any endpoint specific
+ * access rules are implemented in their respective methods.
  */
 @SuppressWarnings("Duplicates")
 @RestController
@@ -32,13 +34,150 @@ public class UserController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
-    String role = "USER";
+    // Admin is only authorized to handle user entities with admin role
+    private final String role = "USER";
 
     @Autowired
     private UserService userService;
 
     @Autowired
     private OrganizationService orgService;
+
+    /**
+     * Retrieve all user entities with role user.
+     *
+     * @return the response entity.
+     */
+    @GetMapping("/")
+    public ResponseEntity<?> getAllUsers() {
+        CustomUserDetails user = UserDetailExtractor.extract(SecurityContextHolder.getContext());
+
+        // Admin should only belong to one organization
+        if(user.getOrganizations().size() != 1)
+            return new ResponseEntity<>("Unexpected error. Only one organization membership expected.", HttpStatus.BAD_REQUEST);
+
+        List<UserEntityDTO> userEntities = new ArrayList<>();
+        // Admin is only authorized to fetch users from its own organization
+        for (OrganizationDTO o: user.getOrganizations()) {
+            try {
+                userEntities = userService.getAllUsersByOrganization(o.getId());
+            } catch (Exception e) {
+                logger.error(e.getMessage());
+                return new ResponseEntity<>("Unexpected error. Organization not found.", HttpStatus.NOT_FOUND);
+            }
+        }
+
+        return new ResponseEntity<>(userEntities, HttpStatus.OK);
+    }
+
+    /**
+     * Retrieve a single user entity with user role by id.
+     *
+     * @param id the user entity id.
+     * @return the response entity.
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getUserById(@PathVariable Long id) {
+        CustomUserDetails user = UserDetailExtractor.extract(SecurityContextHolder.getContext());
+
+        // Admin should only belong to one organization
+        if(user.getOrganizations().size() != 1)
+            return new ResponseEntity<>("Unexpected error. Only one organization membership expected.", HttpStatus.BAD_REQUEST);
+
+        UserEntityDTO userEntityDTO;
+        try {
+            logger.info("Fetching UserEntity with id {}", id);
+            userEntityDTO = userService.getUserByRoleAndId(role, id);
+        } catch (EntityNotFoundException e) {
+            logger.error("UserEntity with id {} and role {} not found.", id, role);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+        // Admin is only authorized to fetch users from its own organization
+        if(!areMembersOfTheSameOrganization(user.getOrganizations(), userEntityDTO.getOrganizations()))
+            return new ResponseEntity<>("Unexpected error. Not authorized to fetch user.", HttpStatus.UNAUTHORIZED);
+
+        return new ResponseEntity<>(userEntityDTO, HttpStatus.OK);
+    }
+
+    /**
+     * Create a user entity with user role.
+     *
+     * @param userEntityDTO the user entity dto.
+     * @return the response entity.
+     */
+    @PostMapping("/")
+    public ResponseEntity<?> addUser(@RequestBody UserEntityExtendedDTO userEntityDTO) {
+        CustomUserDetails user = UserDetailExtractor.extract(SecurityContextHolder.getContext());
+
+        // Admin should only belong to one organization
+        if(user.getOrganizations().size() != 1)
+            return new ResponseEntity<>("Unexpected error. Only one organization membership expected.", HttpStatus.BAD_REQUEST);
+
+        for (OrganizationDTO oUser: user.getOrganizations()) {
+            for (OrganizationDTO oDTO: userEntityDTO.getOrganizations()) {
+                if(!orgService.isOrganizationChildOfRootParent(oDTO.getId(), oUser.getId()))
+                    return new ResponseEntity<>("Unexpected error. Not authorized to add user to organization.", HttpStatus.UNAUTHORIZED);
+            }
+        }
+
+        UserEntityDTO addedUserEntityDTO;
+
+        try {
+            addedUserEntityDTO = userService.addUser(role, userEntityDTO);
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+            return new ResponseEntity<>("Unexpected error. User is not valid.", HttpStatus.BAD_REQUEST);
+        }
+
+        return new ResponseEntity<>(addedUserEntityDTO, HttpStatus.OK);
+    }
+
+    /**
+     * Update a user entity with role USER
+     *
+     * @param userEntityExtendedDTO the new version of the user entity
+     * @param id the id of the user entity to be updated
+     * @return the response entity
+     */
+    @PutMapping("/{id}")
+    public UserEntityDTO updateUser(@RequestBody UserEntityExtendedDTO userEntityExtendedDTO, @PathVariable Long id) {
+        return userService.updateUser(role, id, userEntityExtendedDTO);
+    }
+
+    /**
+     * Change password for a user entity with role USER
+     *
+     * @param userEntityExtendedDTO the user entity with updated password
+     * @param id the id of the user entity to be updated
+     * @return the response entity
+     */
+    @PutMapping("/{id}/changePassword/")
+    public UserEntityDTO updateUserPassword(@RequestBody UserEntityExtendedDTO userEntityExtendedDTO, @PathVariable Long id) {
+        return userService.updatePassword(role, id, userEntityExtendedDTO);
+    }
+
+    // Remove this later?!
+    /**
+     * Delete a user entity with role USER
+     *
+     * @param id the id of the user entity to be deleted
+     */
+    @DeleteMapping("/{id}")
+    public void deleteUser(@PathVariable Long id) {
+        userService.deleteUser(role, id);
+    }
+
+    /**
+     * Verify that the used access token has authority to reach the /user request mapping
+     */
+    @GetMapping("/verify")
+    public @ResponseBody boolean verifyToken(){
+        return true;
+    }
 
     /**
      * Create multiple users by JSON array.
@@ -145,95 +284,13 @@ public class UserController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    /**
-     * Retrieve all user entities with user role
-     *
-     * @return the response entity
-     */
-    @GetMapping("/")
-    public Object getAllUsers() {
-        CustomUserDetails user = UserDetailExtractor.extract(SecurityContextHolder.getContext());
-
-        List<UserEntityDTO> userEntities = userService.getAllActiveUsersByRole(role, SecurityContextHolder.getContext().getAuthentication());
-        if (userEntities == null || userEntities.isEmpty()) {
-            return new ResponseEntity(HttpStatus.NO_CONTENT);
+    private boolean areMembersOfTheSameOrganization(Collection<OrganizationDTO> first, Collection<OrganizationDTO> second) {
+        for (OrganizationDTO oFirst: first) {
+            for (OrganizationDTO oSecond: second) {
+                if(oFirst.getId().equals(oSecond.getId()))
+                    return true;
+            }
         }
-        return new ResponseEntity<>(userEntities, HttpStatus.OK);
+        return false;
     }
-
-    /**
-     * Get a single user entity with user role by id
-     *
-     * @param id the user entity id
-     * @return the response entity
-     */
-    @GetMapping("/{id}")
-    public ResponseEntity<UserEntityDTO> getUserById(@PathVariable Long id) {
-        UserEntityDTO userEntityDTO;
-        try {
-            logger.info("Fetching UserEntity with id {}", id);
-            userEntityDTO = userService.getUserByRoleAndId(role, id);
-        } catch (EntityNotFoundException e) {
-            logger.error("UserEntity with id {} and role {} not found.", id, role);
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        return new ResponseEntity<>(userEntityDTO, HttpStatus.OK);
-    }
-
-    /**
-     * Create a user entity with role USER
-     *
-     * @param userEntityDTO the user entity to be created
-     * @return the response entity
-     */
-    @PostMapping("/")
-    public UserEntityDTO addUser(@RequestBody UserEntityExtendedDTO userEntityDTO) {
-        return userService.addUser(role, userEntityDTO);
-    }
-
-    /**
-     * Update a user entity with role USER
-     *
-     * @param userEntityExtendedDTO the new version of the user entity
-     * @param id the id of the user entity to be updated
-     * @return the response entity
-     */
-    @PutMapping("/{id}")
-    public UserEntityDTO updateUser(@RequestBody UserEntityExtendedDTO userEntityExtendedDTO, @PathVariable Long id) {
-        return userService.updateUser(role, id, userEntityExtendedDTO);
-    }
-
-    /**
-     * Change password for a user entity with role USER
-     *
-     * @param userEntityExtendedDTO the user entity with updated password
-     * @param id the id of the user entity to be updated
-     * @return the response entity
-     */
-    @PutMapping("/{id}/changePassword/")
-    public UserEntityDTO updateUserPassword(@RequestBody UserEntityExtendedDTO userEntityExtendedDTO, @PathVariable Long id) {
-        return userService.updatePassword(role, id, userEntityExtendedDTO);
-    }
-
-    // Remove this later?!
-    /**
-     * Delete a user entity with role USER
-     *
-     * @param id the id of the user entity to be deleted
-     */
-    @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable Long id) {
-        userService.deleteUser(role, id);
-    }
-
-    /**
-     * Verify that the used access token has authority to reach the /user request mapping
-     */
-    @GetMapping("/verify")
-    public @ResponseBody boolean verifyToken(){
-        return true;
-    }
-
-
 }

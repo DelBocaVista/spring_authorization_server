@@ -5,6 +5,7 @@ import com.example.AuthorizationServer.bo.dto.UserEntityExtendedDTO;
 import com.example.AuthorizationServer.bo.dto.UserEntityDTO;
 import com.example.AuthorizationServer.bo.entity.Organization;
 import com.example.AuthorizationServer.bo.entity.UserEntity;
+import com.example.AuthorizationServer.repository.OrganizationRepository;
 import com.example.AuthorizationServer.repository.UserEntityRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,9 @@ public class UserService {
 
     @Autowired
     private UserEntityRepository userEntityRepository;
+
+    @Autowired
+    private OrganizationRepository orgRepository;
 
     @Autowired
     private ModelMapper modelMapper = new ModelMapper();
@@ -166,6 +170,20 @@ public class UserService {
         UserEntity updatedUserEntity = optionalUser.get();
         updatedUserEntity.setRole(userEntityDTO.getRole());
         return convertUserEntityToDto(userEntityRepository.save(updatedUserEntity));
+    }
+
+    public List<UserEntityDTO> getAllUsersByOrganization(Long organizationId) {
+        Optional<Organization> optionalOrganization = orgRepository.findById(organizationId);
+        if(!optionalOrganization.isPresent())
+            throw new NoSuchElementException();
+        Organization organization = optionalOrganization.get();
+        List<UserEntity> result = userEntityRepository.findAllByOrganizationsContainsAndRoleAndEnabled(organization,
+                "USER", true);
+        List<UserEntityDTO> resultDTOs = new ArrayList<>();
+        for (UserEntity u: result) {
+            resultDTOs.add(convertUserEntityToDto(u));
+        }
+        return resultDTOs;
     }
 
     /**

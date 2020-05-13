@@ -18,18 +18,19 @@ import java.util.*;
 /**
  * @author Jonas Lundvall (jonlundv@kth.se)
  *
- * Controller for REST API requests for user entities with admin role. Only the role superadmin has access to this
- * resource. Access is upheld by http security configuration in ResourceServerConfig.
+ * Controller for REST API requests for user entities with admin role. Only the superadmin role has access to this
+ * resource. General access is upheld through http security configuration in ResourceServerConfig. Any endpoint specific
+ * access rules are implemented in their respective methods.
  */
 @SuppressWarnings("Duplicates")
 @RestController
 @RequestMapping("/users")
 public class AdminController {
 
-    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+    private static final Logger logger = LoggerFactory.getLogger(AdminController.class);
 
     // Superadmin is only authorized to handle user entities with admin role
-    String role = "ADMIN";
+    private final String role = "ADMIN";
 
     @Autowired
     private UserService userService;
@@ -49,7 +50,7 @@ public class AdminController {
     }
 
     /**
-     * Get a single admin by id.
+     * Retrieve a single admin by id.
      *
      * @param id the id of the admin.
      * @return the response entity.
@@ -71,7 +72,7 @@ public class AdminController {
     /**
      * Create a new admin.
      *
-     * @param userEntityDTO the admin user entity.
+     * @param userEntityDTO the admin user entity dto.
      * @return the response entity.
      */
     @PostMapping("admins/")
