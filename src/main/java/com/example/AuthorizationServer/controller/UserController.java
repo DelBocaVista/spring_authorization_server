@@ -52,20 +52,25 @@ public class UserController {
     public ResponseEntity<?> getAllUsers() {
         CustomUserDetails user = UserDetailExtractor.extract(SecurityContextHolder.getContext());
 
-        // Admin should only belong to one organization
-        if(user.getOrganizations().size() != 1)
-            return new ResponseEntity<>("Unexpected error. Only one organization membership expected.", HttpStatus.BAD_REQUEST);
-
-        List<UserEntityDTO> userEntities = new ArrayList<>();
-        // Admin is only authorized to fetch users from its own organization
-        for (OrganizationDTO o: user.getOrganizations()) {
-            try {
-                userEntities = userService.getAllUsersByOrganization(o.getId());
-            } catch (Exception e) {
-                logger.error(e.getMessage());
-                return new ResponseEntity<>("Unexpected error. Organization not found.", HttpStatus.NOT_FOUND);
-            }
+        OrganizationDTO adminOrganization;
+        try {
+            adminOrganization = extractAdminRootOrganization(user.getOrganizations());
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>("Unexpected error. Admin organization membership is invalid.", HttpStatus.BAD_REQUEST);
         }
+
+        List<UserEntityDTO> userEntities;
+
+        // REDO!!!!
+
+        // Admin is only authorized to fetch users with membership in sub organizations of its own root organization
+        try {
+            userEntities = userService.getAllUsersByOrganization(adminOrganization.getId());
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+            return new ResponseEntity<>("Unexpected error. Organization not found.", HttpStatus.NOT_FOUND);
+        }
+
 
         return new ResponseEntity<>(userEntities, HttpStatus.OK);
     }
@@ -80,9 +85,12 @@ public class UserController {
     public ResponseEntity<?> getUserById(@PathVariable Long id) {
         CustomUserDetails user = UserDetailExtractor.extract(SecurityContextHolder.getContext());
 
-        // Admin should only belong to one organization
-        if(user.getOrganizations().size() != 1)
-            return new ResponseEntity<>("Unexpected error. Only one organization membership expected.", HttpStatus.BAD_REQUEST);
+        OrganizationDTO adminOrganization;
+        try {
+            adminOrganization = extractAdminRootOrganization(user.getOrganizations());
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>("Unexpected error. Admin organization membership is invalid.", HttpStatus.BAD_REQUEST);
+        }
 
         UserEntityDTO userEntityDTO;
         try {
@@ -96,8 +104,8 @@ public class UserController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
-        // Admin is only authorized to fetch users from its own organization
-        if(!areMembersOfTheSameOrganization(user.getOrganizations(), userEntityDTO.getOrganizations()))
+        // Admin can only fetch user with membership in sub organizations of its own root organization
+        if(!isUserMemberOfSubOrganizationOfRootOrganization(userEntityDTO, adminOrganization))
             return new ResponseEntity<>("Unexpected error. Not authorized to fetch user.", HttpStatus.UNAUTHORIZED);
 
         return new ResponseEntity<>(userEntityDTO, HttpStatus.OK);
@@ -113,70 +121,89 @@ public class UserController {
     public ResponseEntity<?> addUser(@RequestBody UserEntityExtendedDTO userEntityDTO) {
         CustomUserDetails user = UserDetailExtractor.extract(SecurityContextHolder.getContext());
 
-        // Admin should only belong to one organization
-        if(user.getOrganizations().size() != 1)
-            return new ResponseEntity<>("Unexpected error. Only one organization membership expected.", HttpStatus.BAD_REQUEST);
-
-        for (OrganizationDTO oUser: user.getOrganizations()) {
-            for (OrganizationDTO oDTO: userEntityDTO.getOrganizations()) {
-                if(!orgService.isOrganizationChildOfRootParent(oDTO.getId(), oUser.getId()))
-                    return new ResponseEntity<>("Unexpected error. Not authorized to add user to organization.", HttpStatus.UNAUTHORIZED);
-            }
+        OrganizationDTO adminOrganization;
+        try {
+            adminOrganization = extractAdminRootOrganization(user.getOrganizations());
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>("Unexpected error. Admin organization membership is invalid.", HttpStatus.BAD_REQUEST);
         }
 
-        UserEntityDTO addedUserEntityDTO;
+        // Admin can only create user with membership in sub organizations of its own root organization
+        if(!isUserMemberOfSubOrganizationOfRootOrganization(userEntityDTO, adminOrganization))
+            return new ResponseEntity<>("Unexpected error. Not authorized to create user.", HttpStatus.UNAUTHORIZED);
+
+        UserEntityDTO createdUserEntityDTO;
 
         try {
-            addedUserEntityDTO = userService.addUser(role, userEntityDTO);
+            createdUserEntityDTO = userService.addUser(role, userEntityDTO);
         } catch (Exception e) {
             logger.error(e.getMessage());
             return new ResponseEntity<>("Unexpected error. User is not valid.", HttpStatus.BAD_REQUEST);
         }
 
-        return new ResponseEntity<>(addedUserEntityDTO, HttpStatus.OK);
+        return new ResponseEntity<>(createdUserEntityDTO, HttpStatus.OK);
     }
 
     /**
-     * Update a user entity with role USER
+     * Update a user entity with user role.
      *
-     * @param userEntityExtendedDTO the new version of the user entity
-     * @param id the id of the user entity to be updated
-     * @return the response entity
+     * @param userEntityDTO the new version of the user entity dto.
+     * @param id the id of the user entity to be updated.
+     * @return the response entity.
      */
     @PutMapping("/{id}")
-    public UserEntityDTO updateUser(@RequestBody UserEntityExtendedDTO userEntityExtendedDTO, @PathVariable Long id) {
-        return userService.updateUser(role, id, userEntityExtendedDTO);
+    public ResponseEntity<?> updateUser(@RequestBody UserEntityExtendedDTO userEntityDTO, @PathVariable Long id) {
+        CustomUserDetails user = UserDetailExtractor.extract(SecurityContextHolder.getContext());
+
+        OrganizationDTO adminOrganization;
+        try {
+            adminOrganization = extractAdminRootOrganization(user.getOrganizations());
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>("Unexpected error. Admin organization membership is invalid.", HttpStatus.BAD_REQUEST);
+        }
+
+        // Admin can only update user with membership in sub organizations of its own root organization
+        if(!isUserMemberOfSubOrganizationOfRootOrganization(userEntityDTO, adminOrganization))
+            return new ResponseEntity<>("Unexpected error. Not authorized to update user.", HttpStatus.UNAUTHORIZED);
+
+        UserEntityDTO updatedUserEntityDTO = userService.updateUser(role, id, userEntityDTO);
+
+        return new ResponseEntity<>(updatedUserEntityDTO, HttpStatus.OK);
     }
 
-    /**
-     * Change password for a user entity with role USER
-     *
-     * @param userEntityExtendedDTO the user entity with updated password
-     * @param id the id of the user entity to be updated
-     * @return the response entity
-     */
-    @PutMapping("/{id}/changePassword/")
-    public UserEntityDTO updateUserPassword(@RequestBody UserEntityExtendedDTO userEntityExtendedDTO, @PathVariable Long id) {
-        return userService.updatePassword(role, id, userEntityExtendedDTO);
-    }
-
-    // Remove this later?!
     /**
      * Delete a user entity with role USER
      *
      * @param id the id of the user entity to be deleted
      */
     @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable Long id) {
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        CustomUserDetails user = UserDetailExtractor.extract(SecurityContextHolder.getContext());
+
+        OrganizationDTO adminOrganization;
+        try {
+            adminOrganization = extractAdminRootOrganization(user.getOrganizations());
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>("Unexpected error. Admin organization membership is invalid.", HttpStatus.BAD_REQUEST);
+        }
+
+        UserEntityDTO userToBeDeleted = userService.getUserByRoleAndId("USER", id);
+
+        // Admin can only delete user with membership in sub organization of its own root organization
+        if(!isUserMemberOfSubOrganizationOfRootOrganization(userToBeDeleted, adminOrganization))
+            return new ResponseEntity<>("Unexpected error. Not authorized to update user.", HttpStatus.UNAUTHORIZED);
+
         userService.deleteUser(role, id);
+
+        return new ResponseEntity<>("Successfully deleted user with id " + id + ".", HttpStatus.OK);
     }
 
     /**
-     * Verify that the used access token has authority to reach the /user request mapping
+     * Verifies whether submitted access token has authority to reach the /user request mapping.
      */
     @GetMapping("/verify")
-    public @ResponseBody boolean verifyToken(){
-        return true;
+    public ResponseEntity<?> verifyToken(){
+        return new ResponseEntity<>(true, HttpStatus.OK);
     }
 
     /**
@@ -187,11 +214,22 @@ public class UserController {
      */
     @PostMapping("/upload/json/")
     public ResponseEntity<?> createUsersFromJSONArray(@RequestBody List<UserEntityExtendedDTO> userEntityExtendedDTOS) {
+        CustomUserDetails user = UserDetailExtractor.extract(SecurityContextHolder.getContext());
+
+        OrganizationDTO adminOrganization;
+        try {
+            adminOrganization = extractAdminRootOrganization(user.getOrganizations());
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>("Unexpected error. Admin organization membership is invalid.", HttpStatus.BAD_REQUEST);
+        }
 
         for (UserEntityExtendedDTO u: userEntityExtendedDTOS) {
             if (u.getRole().equals("USERS"))
-                return new ResponseEntity<>("Not authorized to create other roles than USER.", HttpStatus.UNAUTHORIZED);
+                return new ResponseEntity<>("Unexpected error. Not authorized to create other roles than user.", HttpStatus.UNAUTHORIZED);
+            if(isUserMemberOfSubOrganizationOfRootOrganization(u, adminOrganization))
+                return new ResponseEntity<>("Unexpected error. Not authorized to create user in organization.", HttpStatus.UNAUTHORIZED);
         }
+
         userService.addUsers(userEntityExtendedDTOS);
         return new ResponseEntity<>(HttpStatus.OK);
     }
@@ -205,6 +243,14 @@ public class UserController {
      */
     @PostMapping("/upload/file/")
     public ResponseEntity<?> createUsersFromCSVFile(@RequestParam("file") MultipartFile file) {
+        CustomUserDetails user = UserDetailExtractor.extract(SecurityContextHolder.getContext());
+
+        OrganizationDTO adminOrganization;
+        try {
+            adminOrganization = extractAdminRootOrganization(user.getOrganizations());
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>("Unexpected error. Admin organization membership is invalid.", HttpStatus.BAD_REQUEST);
+        }
 
         if(file.isEmpty())
             return new ResponseEntity<>("Unexpected error. File is empty.", HttpStatus.NO_CONTENT);
@@ -234,13 +280,13 @@ public class UserController {
 
                 int i = 0;
 
-                UserEntityExtendedDTO user = new UserEntityExtendedDTO();
-                user.setFirstname(userArray[i++]);
-                user.setLastname(userArray[i++]);
-                user.setUsername(userArray[i++]);
-                user.setPassword(userArray[i++]);
-                user.setRole("USER");
-                user.setEnabled(new Boolean(userArray[i++]));
+                UserEntityExtendedDTO userEntityDTO = new UserEntityExtendedDTO();
+                userEntityDTO.setFirstname(userArray[i++]);
+                userEntityDTO.setLastname(userArray[i++]);
+                userEntityDTO.setUsername(userArray[i++]);
+                userEntityDTO.setPassword(userArray[i++]);
+                userEntityDTO.setRole("USER");
+                userEntityDTO.setEnabled(new Boolean(userArray[i++]));
 
                 // All the following columns are expected to be names of existing organizations.
                 Set<OrganizationDTO> organizations = new HashSet<>();
@@ -255,12 +301,10 @@ public class UserController {
                         if(organizationDTO == null)
                             return new ResponseEntity<>("Unexpected error during parsing. CSV file has wrong format.", HttpStatus.BAD_REQUEST);
 
-                        for (OrganizationDTO o: user.getOrganizations()) {
-                            // Admin is only allowed to add users to organizations within its own organization tree
-                            if(orgService.isOrganizationChildOfRootParent(organizationDTO.getId(), o.getId()))
-                                return new ResponseEntity<>("Unexpected error. Not authorized.", HttpStatus.UNAUTHORIZED);
+                        // Admin is only allowed to add users to organizations within its own organization tree
+                        if(orgService.isOrganizationChildOfRootParent(organizationDTO.getId(), adminOrganization.getId()))
+                            return new ResponseEntity<>("Unexpected error. Not authorized to create user in organization.", HttpStatus.UNAUTHORIZED);
 
-                        }
 
                         fetchedOrganizations.put(userArray[i], organizationDTO);
                         organizations.add(organizationDTO);
@@ -269,9 +313,9 @@ public class UserController {
                     i++;
                 }
 
-                user.setOrganizations(organizations);
+                userEntityDTO.setOrganizations(organizations);
 
-                userEntityDTOS.add(user);
+                userEntityDTOS.add(userEntityDTO);
             }
 
             userService.addUsers(userEntityDTOS);
@@ -284,13 +328,40 @@ public class UserController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    private boolean areMembersOfTheSameOrganization(Collection<OrganizationDTO> first, Collection<OrganizationDTO> second) {
-        for (OrganizationDTO oFirst: first) {
-            for (OrganizationDTO oSecond: second) {
-                if(oFirst.getId().equals(oSecond.getId()))
-                    return true;
-            }
+    /**
+     * Helper method that evaluates whether a user is only member of sub organizations to a given root organization.
+     *
+     * @param user the user entity.
+     * @param root the root organization.
+     * @return true if user is only member of sub organizations otherwise false.
+     */
+    private boolean isUserMemberOfSubOrganizationOfRootOrganization(UserEntityDTO user, OrganizationDTO root) {
+        for (OrganizationDTO o: user.getOrganizations()) {
+            if(!orgService.isOrganizationChildOfRootParent(o.getId(), root.getId()))
+                return false;
         }
-        return false;
+        return true;
+    }
+
+    /**
+     * Helper method for extracting the root organization membership of an admin. User entity membership of
+     * organizations are given as a collection. This method that admin is member of only one organization and that the
+     * organization is a root organization.
+     *
+     * @param adminsOrganizations the collection of organizations.
+     * @return the root organization that admin is a member of.
+     */
+    private OrganizationDTO extractAdminRootOrganization(Collection<OrganizationDTO> adminsOrganizations) {
+        List<OrganizationDTO> collectionAsList = new ArrayList<>(adminsOrganizations);
+
+        // Admin should only be member of one organization
+        if(collectionAsList.size() != 1)
+            throw new IllegalArgumentException("Admin is member of more than one organization.");
+
+        // That organization should be a root organization
+        if(!orgService.isRootOrganization(collectionAsList.get(0).getId()))
+            throw new IllegalArgumentException("Admin is member of a none root organization.");
+
+        return collectionAsList.get(0);
     }
 }
