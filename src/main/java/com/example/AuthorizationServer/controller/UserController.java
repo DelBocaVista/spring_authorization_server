@@ -172,9 +172,9 @@ public class UserController {
     }
 
     /**
-     * Delete a user entity with role USER
+     * Delete a user entity with user role.
      *
-     * @param id the id of the user entity to be deleted
+     * @param id the id of the user entity to be deleted.
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {

@@ -105,33 +105,9 @@ public class AdminController {
     }
 
     /**
-     * Update password of an existing admin.
+     * Delete an admin.
      *
-     * @param userEntityDTO the admin user entity with an updated password.
-     * @param id the id of the admin user entity to be updated.
-     * @return the response entity.
-     */
-    @PutMapping("admins/{id}/changePassword/")
-    public ResponseEntity<?> updateUserPassword(@RequestBody UserEntityExtendedDTO userEntityDTO, @PathVariable Long id) {
-        UserEntityDTO newUserEntityDTO = userService.updatePassword(role, id, userEntityDTO);
-        return new ResponseEntity<>(newUserEntityDTO, HttpStatus.OK);
-    }
-
-
-    /**
-     * REMOVE THIS?
-     * @param userEntityDTO
-     * @param id
-     * @return
-     */
-    /*@PutMapping("admins/changeRole/{id}")
-    public UserEntityDTO updateUserRole(@RequestBody UserEntityDTO userEntityDTO, @PathVariable Long id) {
-        return userService.updateRole(role, id, userEntityDTO);
-    }*/
-
-    /**
-     *
-     * @param id
+     * @param id the id of the user entity to be deleted.
      */
     @DeleteMapping("admins/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
