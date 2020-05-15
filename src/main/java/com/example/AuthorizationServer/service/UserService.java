@@ -7,6 +7,7 @@ import com.example.AuthorizationServer.bo.entity.Organization;
 import com.example.AuthorizationServer.bo.entity.UserEntity;
 import com.example.AuthorizationServer.repository.OrganizationRepository;
 import com.example.AuthorizationServer.repository.UserEntityRepository;
+import com.example.AuthorizationServer.utility.UserEntityDTOComparator;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.expression.ParseException;
@@ -131,25 +132,33 @@ public class UserService {
         return userEntityRepository.save(updatedUserEntity);
     }
 
-    // Rewrite this with if checks to see what parameters are supposed to be updated?
-    public UserEntityDTO updateUser(String role, Long id, UserEntityExtendedDTO userEntityExtendedDTO) {
+    public UserEntityDTO updateUser(String role, Long id, UserEntityExtendedDTO userEntityDTO) {
+
         Optional<UserEntity> optionalUser = userEntityRepository.findByRoleAndId(role, id);
         if (!optionalUser.isPresent())
             throw new NoSuchElementException(); // ?
-        UserEntity updatedUserEntity = optionalUser.get();
-        updatedUserEntity.setUsername(userEntityExtendedDTO.getUsername());
-        updatedUserEntity.setFirstname(userEntityExtendedDTO.getFirstname());
-        updatedUserEntity.setLastname(userEntityExtendedDTO.getLastname());
-        updatedUserEntity.setPassword(userEntityExtendedDTO.getPassword());
-        updatedUserEntity.setRole(userEntityExtendedDTO.getRole());
-        updatedUserEntity.setEnabled(userEntityExtendedDTO.getEnabled());
 
-        Set<Organization> organizations = new HashSet<>();
-        for (OrganizationDTO o: userEntityExtendedDTO.getOrganizations()) {
-            organizations.add(convertToEntity(o));
+        UserEntity updatedUserEntity = optionalUser.get();
+
+        if(!userEntityDTO.getUsername().equals(""))
+            updatedUserEntity.setUsername(userEntityDTO.getUsername());
+        if(!userEntityDTO.getFirstname().equals(""))
+            updatedUserEntity.setFirstname(userEntityDTO.getFirstname());
+        if(!userEntityDTO.getLastname().equals(""))
+            updatedUserEntity.setLastname(userEntityDTO.getLastname());
+        if(!userEntityDTO.getPassword().equals(""))
+            updatedUserEntity.setPassword(new BCryptPasswordEncoder().encode(userEntityDTO.getPassword()));
+        // System does not allow for changing role of user
+        if(userEntityDTO.getEnabled() != null)
+            updatedUserEntity.setEnabled(userEntityDTO.getEnabled());
+        if(userEntityDTO.getOrganizations() != null) {
+            Set<Organization> organizations = new HashSet<>();
+            for (OrganizationDTO o : userEntityDTO.getOrganizations()) {
+                organizations.add(convertToEntity(o));
+            }
+            updatedUserEntity.setOrganizations(organizations);
         }
 
-        updatedUserEntity.setOrganizations(organizations);
         return convertUserEntityToDto(userEntityRepository.save(updatedUserEntity));
     }
 
@@ -189,6 +198,21 @@ public class UserService {
         return resultDTOs;
     }
 
+    public List<UserEntityDTO> getAllUsersByRootOrganization(Long organizationId, int limit, int offset) {
+        List<UserEntityDTO> all = getAllUsersByRootOrganization(organizationId);
+
+        return new ArrayList<>(
+                all.subList(
+                        Math.min(all.size(), offset),
+                        Math.min(all.size(), offset + limit)
+                )
+        );
+    }
+
+    public List<UserEntityDTO> getAllUsersByRootOrganization(Long organizationId, int limit) {
+        return getAllUsersByRootOrganization(organizationId, limit, 0);
+    }
+
     public List<UserEntityDTO> getAllUsersByRootOrganization(Long organizationId) {
 
         if(!orgService.isRootOrganization(organizationId))
@@ -218,6 +242,9 @@ public class UserService {
         }
 
         List<UserEntityDTO> result = new ArrayList<>(users);
+
+        // Sort by username
+        result.sort(UserEntityDTOComparator.INSTANCE);
 
         return result;
     }

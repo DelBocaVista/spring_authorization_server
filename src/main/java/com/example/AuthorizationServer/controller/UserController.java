@@ -46,10 +46,12 @@ public class UserController {
     /**
      * Retrieve all user entities with role user.
      *
+     * @param limit
+     * @param offset
      * @return the response entity.
      */
     @GetMapping("/")
-    public ResponseEntity<?> getAllUsers() {
+    public ResponseEntity<?> getAllUsers(@RequestParam(required = false) Integer limit, @RequestParam(required = false) Integer offset) {
         CustomUserDetails user = UserDetailExtractor.extract(SecurityContextHolder.getContext());
 
         OrganizationDTO adminOrganization;
@@ -61,9 +63,18 @@ public class UserController {
 
         List<UserEntityDTO> userEntities;
 
+        int getLimit = 20;
+        int getOffset = 0;
+
+        if (limit != null)
+            getLimit = limit;
+
+        if (offset != null)
+            getOffset = offset;
+
         // Admin is only authorized to fetch users with membership in sub organizations of its own root organization
         try {
-            userEntities = userService.getAllUsersByRootOrganization(adminOrganization.getId());
+            userEntities = userService.getAllUsersByRootOrganization(adminOrganization.getId(), getLimit, getOffset);
         } catch (Exception e) {
             logger.error(e.getMessage());
             return new ResponseEntity<>("Unexpected error. Organization not found.", HttpStatus.NOT_FOUND);

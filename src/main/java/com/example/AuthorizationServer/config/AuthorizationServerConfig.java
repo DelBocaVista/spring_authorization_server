@@ -47,8 +47,8 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     }
 
     @Override
-    public void configure(final AuthorizationServerSecurityConfigurer oauthServer) throws Exception {
-        oauthServer.tokenKeyAccess("permitAll()").checkTokenAccess("isAuthenticated()");
+    public void configure(final AuthorizationServerSecurityConfigurer security) throws Exception {
+        security.tokenKeyAccess("permitAll()").checkTokenAccess("isAuthenticated()");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
@@ -63,7 +63,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
         //source.registerCorsConfiguration("/oauth/token", config);
         source.registerCorsConfiguration("/**", config);
         CorsFilter filter = new CorsFilter(source);
-        oauthServer.addTokenEndpointAuthenticationFilter(filter);
+        security.addTokenEndpointAuthenticationFilter(filter);
     }
 
     @Override
