@@ -77,7 +77,7 @@ public class UserController {
             userEntities = userService.getAllUsersByRootOrganization(adminOrganization.getId(), getLimit, getOffset);
         } catch (Exception e) {
             logger.error(e.getMessage());
-            return new ResponseEntity<>("Unexpected error. Organization not found.", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("Unexpected error. Organization not found.", HttpStatus.BAD_REQUEST);
         }
 
 
@@ -107,7 +107,7 @@ public class UserController {
             userEntityDTO = userService.getUserByRoleAndId(role, id);
         } catch (EntityNotFoundException e) {
             logger.error("UserEntity with id {} and role {} not found.", id, role);
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             logger.error(e.getMessage());
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -240,7 +240,7 @@ public class UserController {
         }
 
         userService.addUsers(userEntityExtendedDTOS);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>("Successfully created users.", HttpStatus.OK);
     }
 
 

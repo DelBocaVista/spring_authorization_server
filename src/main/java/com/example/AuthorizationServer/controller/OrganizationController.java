@@ -256,7 +256,7 @@ public class OrganizationController {
      * @param parentId the id of the new parent organization.
      * @return the response entity.
      */
-    @PutMapping("/{childId}/changeParent/{parentId}")
+    @PutMapping("/{childId}/change_parent/{parentId}")
     public ResponseEntity<?> updateOrganizationParent(@PathVariable Long childId, @PathVariable Long parentId) {
         CustomUserDetails user = UserDetailExtractor.extract(SecurityContextHolder.getContext());
 
@@ -311,6 +311,7 @@ public class OrganizationController {
         return new ResponseEntity<>("Unexpected error. Not authorized.", HttpStatus.UNAUTHORIZED);
     }
 
+    // LÄGG TILL BAD REQUEST!!!
     /**
      * Delete an organization.
      *
@@ -344,7 +345,7 @@ public class OrganizationController {
 
         if(authorized) {
             orgService.deleteOrganization(id);
-            return new ResponseEntity<>("Successfully deleted rganization with id " + id + ".", HttpStatus.OK);
+            return new ResponseEntity<>("Successfully deleted organization with id " + id + ".", HttpStatus.OK);
         } else {
             return new ResponseEntity<>("Unexpected error. Not authorized.", HttpStatus.UNAUTHORIZED);
         }
