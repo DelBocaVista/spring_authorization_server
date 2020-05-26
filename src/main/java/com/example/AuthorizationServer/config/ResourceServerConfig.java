@@ -9,12 +9,13 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Res
 @Configuration
 @EnableResourceServer
 public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
-    private static final String RESOURCE_ID = "resource-server-rest-api";
+
+    /*private static final String RESOURCE_ID = "resource-server-rest-api";
 
     @Override
     public void configure(ResourceServerSecurityConfigurer resources) {
         resources.resourceId(RESOURCE_ID);
-    }
+    }*/
 
     @Override
     public void configure(HttpSecurity http) throws Exception {
@@ -22,9 +23,10 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
                 .cors()
                     .and()
                 .authorizeRequests()
-                    .antMatchers("/user/verify").permitAll()
-                    .antMatchers("/user/**").hasAuthority("ADMIN")
-                    .antMatchers("/admin/**").hasAuthority("SUPERADMIN")
+                    .antMatchers("/organizations/**").hasAnyAuthority("ADMIN", "SUPERADMIN")
+                    .antMatchers("/users/verify").hasAnyAuthority("USER", "ADMIN", "SUPERADMIN") // Maybe should be just USER?
+                    .antMatchers("/users/admins/**").hasAuthority("SUPERADMIN")
+                    .antMatchers("/users/**").hasAuthority("ADMIN")
                 .anyRequest().authenticated();
     }
 }

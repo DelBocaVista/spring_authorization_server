@@ -1,6 +1,6 @@
 package com.example.AuthorizationServer.config;
 
-import com.example.AuthorizationServer.services.CustomUserDetailsService;
+import com.example.AuthorizationServer.security.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -42,12 +42,13 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     // This configuration Bean is directly connected to the cors() annotation on the HttpSecurity object in the configure
-    // functions in WebsSecurityConfig and ResourceServerConfig
+    // functions in WebsSecurityConfig and ResourceServerConfig.
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+        // Change this to match your setup in production.
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
-        configuration.setAllowedMethods(Arrays.asList("GET","POST","PUT"));
+        configuration.setAllowedMethods(Arrays.asList("GET","POST","PUT","DELETE"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -69,7 +70,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Autowired
-    public void configureGlobal(AuthenticationManagerBuilder auth) {
-        auth.authenticationProvider(authenticationProvider());
+    public void configureGlobal(AuthenticationManagerBuilder authenticationManagerBuilder) {
+        authenticationManagerBuilder.authenticationProvider(authenticationProvider());
     }
 }

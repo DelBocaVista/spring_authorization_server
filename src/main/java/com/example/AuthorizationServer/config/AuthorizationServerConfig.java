@@ -1,12 +1,11 @@
 package com.example.AuthorizationServer.config;
 
-import com.example.AuthorizationServer.services.CustomUserDetailsService;
+import com.example.AuthorizationServer.security.CustomTokenConverter;
+import com.example.AuthorizationServer.security.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
@@ -20,16 +19,11 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
 @Configuration
 @EnableAuthorizationServer
 public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
 
     @Autowired
-    @Qualifier("authenticationManagerBean")
     private AuthenticationManager authenticationManager;
 
     @Autowired
@@ -40,19 +34,19 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 
     @Bean
     public TokenStore tokenStore(){
-        return new JwtTokenStore(defaultAccessTokenConverter());
+        return new JwtTokenStore(accessTokenConverter());
     }
 
     @Bean
-    public JwtAccessTokenConverter defaultAccessTokenConverter() {
-        JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
-        converter.setSigningKey("123");
-        return converter;
+    public JwtAccessTokenConverter accessTokenConverter() {
+        CustomTokenConverter tokenConverter = new CustomTokenConverter();
+        tokenConverter.setSigningKey("e53969904d");
+        return tokenConverter;
     }
 
     @Override
-    public void configure(final AuthorizationServerSecurityConfigurer oauthServer) throws Exception {
-        oauthServer.tokenKeyAccess("permitAll()").checkTokenAccess("isAuthenticated()");
+    public void configure(final AuthorizationServerSecurityConfigurer security) throws Exception {
+        security.tokenKeyAccess("permitAll()").checkTokenAccess("isAuthenticated()");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
@@ -67,7 +61,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
         //source.registerCorsConfiguration("/oauth/token", config);
         source.registerCorsConfiguration("/**", config);
         CorsFilter filter = new CorsFilter(source);
-        oauthServer.addTokenEndpointAuthenticationFilter(filter);
+        security.addTokenEndpointAuthenticationFilter(filter);
     }
 
     @Override
@@ -78,12 +72,15 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
                 .authorities("USER","ADMIN","SUPERADMIN")
                 .autoApprove(true)
                 .accessTokenValiditySeconds(180)//Access token is valid for 3 minutes.
-                .refreshTokenValiditySeconds(600);//Refresh token is valid for 10 minutes.;
+                .refreshTokenValiditySeconds(600);//Refresh token is valid for 10 minutes.
     }
 
     @Override
     public void configure(final AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
-        endpoints.tokenStore(tokenStore()).authenticationManager(authenticationManager).accessTokenConverter(defaultAccessTokenConverter())
-                        .userDetailsService(customUserDetailsService);
+        endpoints
+                .tokenStore(tokenStore())
+                .authenticationManager(authenticationManager)
+                .accessTokenConverter(accessTokenConverter())
+                .userDetailsService(customUserDetailsService);
     }
 }
