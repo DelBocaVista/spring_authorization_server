@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 /**
- * @author Jonas Lundvall (jonlundv@kth.se)
+ * @author Jonas Fredén-Lundvall (jonlundv@kth.se)
  *
  * Controller for REST API requests for user entities with admin role. Only the superadmin role has access to this
  * resource. General access is upheld through http security configuration in ResourceServerConfig. Any endpoint specific
@@ -111,7 +111,13 @@ public class AdminController {
      */
     @DeleteMapping("admins/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
-        userService.deleteUser(role, id);
+
+        try {
+            userService.deleteUser(role, id);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Unexpected error. User with role not found.", HttpStatus.BAD_REQUEST);
+        }
+
         return new ResponseEntity<>("Successfully deleted admin user with id " + id + ".", HttpStatus.OK);
     }
 

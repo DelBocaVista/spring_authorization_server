@@ -3,7 +3,7 @@ package com.example.AuthorizationServer.bo.dto;
 import java.util.Set;
 
 /**
- * @author Jonas Lundvall (jonlundv@kth.se)
+ * @author Jonas Fredén-Lundvall (jonlundv@kth.se)
  *
  * Subclass of UserEntityDTO containing an additional password property. Used for data transfer when attempting to add
  * or update a UserEntity.

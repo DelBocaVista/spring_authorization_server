@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * @author Jonas Lundvall (jonlundv@kth.se)
+ * @author Jonas Fredén-Lundvall (jonlundv@kth.se)
  *
  * Represents a User of the booking system. The name UserEntity is used instead of User due to a naming conflict with
  * the UserDetailsService class User

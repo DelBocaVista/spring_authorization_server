@@ -10,18 +10,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.expression.ParseException;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
 /**
- * @author Jonas Lundvall (jonlundv@kth.se)
+ * @author Jonas Fredén-Lundvall (jonlundv@kth.se)
  *
  * Service for handling retrieving, saving and updating organizations.
  */
-@Repository // Remove?
-@Transactional // Remove?
+@Service
+@Transactional
 public class OrganizationService {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
@@ -327,23 +327,10 @@ public class OrganizationService {
     }
 
     public void deleteOrganization(Long id) {
+        Optional<Organization> optionalOrg = organizationRepository.findById(id);
+        if (!optionalOrg.isPresent())
+            throw new NoSuchElementException();
         organizationRepository.deleteById(id);
-    }
-
-    public String prettyPrint(List<OrganizationDTO> nodes) {
-
-        StringBuilder sb = new StringBuilder();
-
-        for (int i = 0; i < nodes.size(); i++) {
-
-            String[] path = nodes.get(i).getPath().split("\\.");
-
-            for (int j = 0; j < path.length - 1; j++) {
-                sb.append("  ");
-            }
-            sb.append(path[path.length - 1] + "\n");
-        }
-        return sb.toString();
     }
 
     /**

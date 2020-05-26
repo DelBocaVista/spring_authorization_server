@@ -21,7 +21,7 @@ import java.io.*;
 import java.util.*;
 
 /**
- * @author Jonas Lundvall (jonlundv@kth.se), Gustav Kavtaradze (guek@kth.se)
+ * @author Jonas Fredén-Lundvall (jonlundv@kth.se), Gustav Kavtaradze (guek@kth.se)
  *
  * Controller for REST API requests for user entities with user role. Only the admin role has access to this
  * resource. General access is upheld through http security configuration in ResourceServerConfig. Any endpoint specific
@@ -202,17 +202,13 @@ public class UserController {
         if(!isUserMemberOfSubOrganizationOfRootOrganization(userToBeDeleted, adminOrganization))
             return new ResponseEntity<>("Unexpected error. Not authorized to update user.", HttpStatus.UNAUTHORIZED);
 
-        userService.deleteUser(role, id);
+        try {
+            userService.deleteUser(role, id);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Unexpected error. User with role not found.", HttpStatus.BAD_REQUEST);
+        }
 
         return new ResponseEntity<>("Successfully deleted user with id " + id + ".", HttpStatus.OK);
-    }
-
-    /**
-     * Verifies whether submitted access token has authority to reach the /user request mapping.
-     */
-    @GetMapping("/verify")
-    public ResponseEntity<?> verifyToken(){
-        return new ResponseEntity<>(true, HttpStatus.OK);
     }
 
     /**

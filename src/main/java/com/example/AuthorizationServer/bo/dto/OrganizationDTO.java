@@ -1,7 +1,7 @@
 package com.example.AuthorizationServer.bo.dto;
 
 /**
- * @author Jonas Lundvall (jonlundv@kth.se)
+ * @author Jonas Fredén-Lundvall (jonlundv@kth.se)
  *
  * Data transfer object for Organization.
  */

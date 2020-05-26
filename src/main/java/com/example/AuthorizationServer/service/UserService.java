@@ -14,19 +14,19 @@ import org.springframework.expression.ParseException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.common.exceptions.UnauthorizedUserException;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.*;
 
 /**
- * @author Jonas Lundvall (jonlundv@kth.se)
+ * @author Jonas Fredén-Lundvall (jonlundv@kth.se)
  *
  * Service for handling retrieving, saving and updating user entities.
  */
-@Repository // Remove?
-@Transactional // Remove?
+@Service
+@Transactional
 public class UserService {
 
     @Autowired
@@ -41,7 +41,12 @@ public class UserService {
     @Autowired
     private ModelMapper modelMapper = new ModelMapper();
 
-    // IS ONLY USED BY USERDETAILSSERVICE AND SEED DATABASE!!! - REMOVE LATER?
+    /**
+     * Fetches a user entity dto from username.
+     *
+     * @param username the username of the user entity.
+     * @return the user entity dto.
+     */
     public UserEntity getUserByUsername(String username) {
         Optional<UserEntity> optionalUserEntity = userEntityRepository.findByUsernameAndEnabled(username,true);
         if (!optionalUserEntity.isPresent()) {
@@ -50,19 +55,12 @@ public class UserService {
         return optionalUserEntity.get();
     }
 
-    public UserEntityDTO getUserByRoleAndUsername(String role, String username) {
-        Optional<UserEntity> optionalUserEntity = userEntityRepository.findByUsernameAndRoleAndEnabled(username, role, true);
-        if (!optionalUserEntity.isPresent()) {
-            throw new EntityNotFoundException();
-        }
-        return convertUserEntityToDto(optionalUserEntity.get());
-    }
-
     /**
-     * Get a user entity dto from role and id
-     * @param role the role of the user entity dto
-     * @param id the id of the user entity dto
-     * @return the user entity dto
+     * Fetches a user entity dto from role and id.
+     *
+     * @param role the role of the user entity dto.
+     * @param id the id of the user entity dto.
+     * @return the user entity dto.
      */
     public UserEntityDTO getUserByRoleAndId(String role, Long id) {
         Optional<UserEntity> optionalUserEntity = userEntityRepository.findByRoleAndId(role, id);
@@ -72,6 +70,12 @@ public class UserService {
         return convertUserEntityToDto(optionalUserEntity.get());
     }
 
+    /**
+     * Fetches a user entity from id.
+     *
+     * @param id the id of the user entity.
+     * @return the optional user entity.
+     */
     private Optional<UserEntity> getUserById(Long id) {
         return userEntityRepository.findById(id);
     }
@@ -88,6 +92,13 @@ public class UserService {
         return userEntityDTOS;
     }
 
+    /**
+     * Create a new user entity.
+     *
+     * @param role the allowed role of the new user entity.
+     * @param userEntityDTO the user entity dto of the new user entity.
+     * @return the user entity dto representing the new user.
+     */
     public UserEntityDTO addUser(String role, UserEntityExtendedDTO userEntityDTO) {
         if (!userEntityDTO.getRole().equals(role))
             throw new UnauthorizedUserException("Not authorized to create a new user with this role");
@@ -97,6 +108,11 @@ public class UserService {
         return convertUserEntityToDto(userEntityRepository.save(convertToEntity(userEntityDTO)));
     }
 
+    /**
+     * Create multiple user entities.
+     *
+     * @param userEntityDTOS the list of user entity dtos representing the new user entities to be created.
+     */
     public void addUsers(List<UserEntityExtendedDTO> userEntityDTOS) {
 
         List<UserEntity> userEntities = new ArrayList<>();
@@ -111,7 +127,6 @@ public class UserService {
 
     // JUST FOR SEEDING - REMOVE LATER!!
     public UserEntity addUser(UserEntity userEntity) {
-        System.out.println("koll:" + userEntity.toString());
         userEntity.setPassword(new BCryptPasswordEncoder().encode(userEntity.getPassword()));
         return userEntityRepository.save(userEntity);
     }
@@ -132,6 +147,14 @@ public class UserService {
         return userEntityRepository.save(updatedUserEntity);
     }
 
+    /**
+     * Update an existing user entity.
+     *
+     * @param role the allowed role of the user entity.
+     * @param id the id of the the user entity to be updated.
+     * @param userEntityDTO the updated user entity dto version of the user entity to be updated.
+     * @return the user entity dto representing the updated user entity.
+     */
     public UserEntityDTO updateUser(String role, Long id, UserEntityExtendedDTO userEntityDTO) {
 
         Optional<UserEntity> optionalUser = userEntityRepository.findByRoleAndId(role, id);
@@ -162,28 +185,25 @@ public class UserService {
         return convertUserEntityToDto(userEntityRepository.save(updatedUserEntity));
     }
 
+    /**
+     * Deletes a user entity.
+     *
+     * @param role the allowed role of the user entity to be deleted.
+     * @param id the id of the user entity to be deleted.
+     */
     public void deleteUser(String role, Long id) {
+        Optional<UserEntity> optionalUser = userEntityRepository.findByRoleAndId(role, id);
+        if (!optionalUser.isPresent())
+            throw new NoSuchElementException();
         userEntityRepository.deleteByRoleAndId(role, id);
     }
 
-    public UserEntityDTO updatePassword(String role, Long id, UserEntityExtendedDTO userEntityExtendedDTO) {
-        Optional<UserEntity> optionalUser = userEntityRepository.findByRoleAndId(role, id);
-        if (!optionalUser.isPresent())
-            throw new NoSuchElementException(); // ?
-        UserEntity updatedUserEntity = optionalUser.get();
-        updatedUserEntity.setPassword(userEntityExtendedDTO.getPassword());
-        return convertUserEntityToDto(userEntityRepository.save(updatedUserEntity));
-    }
-
-    public UserEntityDTO updateRole(String role, Long id, UserEntityDTO userEntityDTO) {
-        Optional<UserEntity> optionalUser = userEntityRepository.findByRoleAndId(role, id);
-        if (!optionalUser.isPresent())
-            throw new NoSuchElementException(); // ?
-        UserEntity updatedUserEntity = optionalUser.get();
-        updatedUserEntity.setRole(userEntityDTO.getRole());
-        return convertUserEntityToDto(userEntityRepository.save(updatedUserEntity));
-    }
-
+    /**
+     * Fetch all user entities of a given organization.
+     *
+     * @param organizationId the id of the organization to fetch user entities from.
+     * @return the user entity dtos of the user entities found.
+     */
     public List<UserEntityDTO> getAllUsersByOrganization(Long organizationId) {
         Optional<Organization> optionalOrganization = orgRepository.findById(organizationId);
         if(!optionalOrganization.isPresent())
@@ -198,6 +218,15 @@ public class UserService {
         return resultDTOs;
     }
 
+    /**
+     * Fetch unique user entities belonging to a given root organization or one of its sub organizations. Results are
+     * sorted by username and chosen by given limit and offset values.
+     *
+     * @param organizationId the id of the root organization.
+     * @param limit
+     * @param offset
+     * @return
+     */
     public List<UserEntityDTO> getAllUsersByRootOrganization(Long organizationId, int limit, int offset) {
         List<UserEntityDTO> all = getAllUsersByRootOrganization(organizationId);
 
@@ -209,10 +238,24 @@ public class UserService {
         );
     }
 
+    /**
+     * Fetch unique user entities belonging to a given root organization or one of its sub organizations. Results are
+     * sorted by username and chosen by given limit.
+     * @param organizationId the id of the root organization.
+     * @param limit
+     * @return
+     */
     public List<UserEntityDTO> getAllUsersByRootOrganization(Long organizationId, int limit) {
         return getAllUsersByRootOrganization(organizationId, limit, 0);
     }
 
+    /**
+     * Fetches all unique user entities belonging to a given root organization or one of its sub organizations. Results
+     * are sorted by username.
+     *
+     * @param organizationId the id of the root organization.
+     * @return the list of user entity dtos representing the user entities found.
+     */
     public List<UserEntityDTO> getAllUsersByRootOrganization(Long organizationId) {
 
         if(!orgService.isRootOrganization(organizationId))

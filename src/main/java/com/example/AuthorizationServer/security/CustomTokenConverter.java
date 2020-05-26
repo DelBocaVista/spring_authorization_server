@@ -1,9 +1,6 @@
 package com.example.AuthorizationServer.security;
 
 import com.example.AuthorizationServer.bo.dto.OrganizationDTO;
-import com.example.AuthorizationServer.security.CustomUserDetails;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
@@ -14,12 +11,15 @@ import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenCo
 import java.util.*;
 
 /**
- * @author Jonas Lundvall (jonlundv@kth.se)
+ * @author Jonas Fredén-Lundvall (jonlundv@kth.se)
  *
  * Custom helper which acts as a TokenEnhancer for when tokens are granted.
  */
 public class CustomTokenConverter extends JwtAccessTokenConverter {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public OAuth2AccessToken enhance(OAuth2AccessToken accessToken, OAuth2Authentication authentication) {
 
@@ -35,6 +35,9 @@ public class CustomTokenConverter extends JwtAccessTokenConverter {
         return accessToken;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public OAuth2Authentication extractAuthentication(Map<String, ?> map) {
         OAuth2Authentication authentication = super.extractAuthentication(map);
@@ -62,6 +65,4 @@ public class CustomTokenConverter extends JwtAccessTokenConverter {
 
         return authentication;
     }
-
-
 }

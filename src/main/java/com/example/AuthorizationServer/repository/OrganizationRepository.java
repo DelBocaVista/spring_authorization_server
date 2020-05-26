@@ -8,6 +8,11 @@ import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * @author Jonas Fredén-Lundvall (jonlundv@kth.se)
+ *
+ * Repository for persisting organizations.
+ */
 @Repository
 @Transactional
 public interface OrganizationRepository extends CrudRepository<Organization, String> {
@@ -17,8 +22,6 @@ public interface OrganizationRepository extends CrudRepository<Organization, Str
     Optional<Organization> findByName(String name);
 
     List<Organization> findAllByOrderByPathAsc();
-
-    List<Organization> findByPathEndsWith(String id);
 
     List<Organization> findByPathStartsWith(String id);
 

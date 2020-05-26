@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
- * @author Jonas Lundvall (jonlundv@kth.se)
+ * @author Jonas Fredén-Lundvall (jonlundv@kth.se)
  *
  * Controller for REST API requests for organizations. Both admin and superadmin roles has access to this
  * resource. General access is upheld through http security configuration in ResourceServerConfig. Any endpoint specific
@@ -311,12 +311,11 @@ public class OrganizationController {
         return new ResponseEntity<>("Unexpected error. Not authorized.", HttpStatus.UNAUTHORIZED);
     }
 
-    // LÄGG TILL BAD REQUEST!!!
     /**
      * Delete an organization.
      *
      * @param id the id of the organization to be deleted.
-     * @return  the response entity.
+     * @return the response entity.
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteOrganization(@PathVariable Long id) {
@@ -344,8 +343,15 @@ public class OrganizationController {
         }
 
         if(authorized) {
-            orgService.deleteOrganization(id);
+
+            try {
+                orgService.deleteOrganization(id);
+            } catch (Exception e) {
+                return new ResponseEntity<>("Unexpected error. Organization not found.", HttpStatus.BAD_REQUEST);
+            }
+
             return new ResponseEntity<>("Successfully deleted organization with id " + id + ".", HttpStatus.OK);
+
         } else {
             return new ResponseEntity<>("Unexpected error. Not authorized.", HttpStatus.UNAUTHORIZED);
         }

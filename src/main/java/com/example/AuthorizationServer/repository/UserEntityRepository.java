@@ -9,6 +9,11 @@ import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * @author Jonas Fredén-Lundvall (jonlundv@kth.se)
+ *
+ * Repository for persisting user entities.
+ */
 @Repository
 @Transactional
 public interface UserEntityRepository extends CrudRepository<UserEntity, String> {

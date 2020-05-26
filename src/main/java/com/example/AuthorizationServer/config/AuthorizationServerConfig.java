@@ -3,7 +3,6 @@ package com.example.AuthorizationServer.config;
 import com.example.AuthorizationServer.security.CustomTokenConverter;
 import com.example.AuthorizationServer.security.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,7 +24,6 @@ import org.springframework.web.filter.CorsFilter;
 public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
 
     @Autowired
-    @Qualifier("authenticationManagerBean")
     private AuthenticationManager authenticationManager;
 
     @Autowired
@@ -42,7 +40,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     @Bean
     public JwtAccessTokenConverter accessTokenConverter() {
         CustomTokenConverter tokenConverter = new CustomTokenConverter();
-        tokenConverter.setSigningKey("123");
+        tokenConverter.setSigningKey("e53969904d");
         return tokenConverter;
     }
 
@@ -74,7 +72,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
                 .authorities("USER","ADMIN","SUPERADMIN")
                 .autoApprove(true)
                 .accessTokenValiditySeconds(180)//Access token is valid for 3 minutes.
-                .refreshTokenValiditySeconds(600);//Refresh token is valid for 10 minutes.;
+                .refreshTokenValiditySeconds(600);//Refresh token is valid for 10 minutes.
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.example.AuthorizationServer.security;
 
 import com.example.AuthorizationServer.bo.dto.OrganizationDTO;
+import com.example.AuthorizationServer.bo.dto.UserEntityDTO;
 import com.example.AuthorizationServer.bo.entity.Organization;
 import com.example.AuthorizationServer.bo.entity.UserEntity;
 import com.example.AuthorizationServer.service.UserService;
@@ -18,7 +19,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * @author Jonas Lundvall (jonlundv@kth.se)
+ * @author Jonas Fredén-Lundvall (jonlundv@kth.se)
  *
  * Custom implementation of core interface UserDetailsService which loads user-specific data.
  */
@@ -31,6 +32,11 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Autowired
     private ModelMapper modelMapper = new ModelMapper();
 
+    /**
+     * {@inheritDoc}
+     *
+     * Override adds custom information to user details.
+     */
     @Override
     public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
         UserEntity userEntity = userService.getUserByUsername(userName);
@@ -47,7 +53,6 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     private OrganizationDTO convertToDto(Organization organization) {
-        OrganizationDTO organizationDTO = modelMapper.map(organization, OrganizationDTO.class);
-        return organizationDTO;
+        return modelMapper.map(organization, OrganizationDTO.class);
     }
 }
