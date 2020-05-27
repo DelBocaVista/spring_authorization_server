@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
- * @author Jonas Fredén-Lundvall (jonlundv@kth.se)
+ * @author Jonas Fredén-Lundvall (jonlundv@kth.se), Erik Wikzén (wikzen@kth.se)
  *
  * Controller for REST API requests for organizations. Both admin and superadmin roles has access to this
  * resource. General access is upheld through http security configuration in ResourceServerConfig. Any endpoint specific
