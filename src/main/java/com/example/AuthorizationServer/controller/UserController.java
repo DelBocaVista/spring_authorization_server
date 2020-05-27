@@ -21,7 +21,7 @@ import java.io.*;
 import java.util.*;
 
 /**
- * @author Jonas Fredén-Lundvall (jonlundv@kth.se), Gustav Kavtaradze (guek@kth.se)
+ * @author Jonas Fredén-Lundvall (jonlundv@kth.se), Gustav Kavtaradze (guek@kth.se), Erik Wikzén (wikzen@kth.se)
  *
  * Controller for REST API requests for user entities with user role. Only the admin role has access to this
  * resource. General access is upheld through http security configuration in ResourceServerConfig. Any endpoint specific
