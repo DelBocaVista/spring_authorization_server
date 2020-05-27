@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 
 /**
- * @author Jonas Fredén-Lundvall (jonlundv@kth.se)
+ * @author Jonas Fredén-Lundvall (jonlundv@kth.se), Erik Wikzén (wikzen@kth.se)
  *
  * Service for handling retrieving, saving and updating organizations.
  */
