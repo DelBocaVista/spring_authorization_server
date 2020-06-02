@@ -211,6 +211,7 @@ public class OrganizationController {
 
     /**
      * Update an existing organization.
+     *
      * @param organizationDTO the updated dto of the organization.
      * @param id the id of the organization.
      * @return the response entity.
@@ -256,7 +257,7 @@ public class OrganizationController {
      * @param parentId the id of the new parent organization.
      * @return the response entity.
      */
-    @PutMapping("/{childId}/change_parent/{parentId}")
+    @PutMapping("/{childId}/parent/{parentId}")
     public ResponseEntity<?> updateOrganizationParent(@PathVariable Long childId, @PathVariable Long parentId) {
         CustomUserDetails user = UserDetailExtractor.extract(SecurityContextHolder.getContext());
 

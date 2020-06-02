@@ -145,16 +145,6 @@ public class OrganizationService {
         return this.findAll();
     }
 
-    private List<OrganizationDTO> findAll() {
-        List<OrganizationDTO> orgDtos = new ArrayList<>();
-        List<Organization> orgs = organizationRepository.findAllByOrderByPathAsc();
-        for (Organization o: orgs) {
-            orgDtos.add(convertToDto(o));
-        }
-
-        return orgDtos;
-    }
-
     /**
      * Checks if an organization is a child of another organization.
      *
@@ -252,16 +242,20 @@ public class OrganizationService {
         // Because of ascending sorting, the first item in organizations will be node with given id
         String[] pathArray = organizations.get(0).getPath().split("\\.");
         for (Organization o: organizations) {
+
             OrganizationDTO dto = convertToDto(o);
+            String[] orgPathArray = dto.getPath().split("\\.");
 
             // Result could possibly contain unwanted organization
             if(pathArray[0].equals(id.toString())) {
+                System.out.println(o.getName() + " " + o.getPath());
                 if (pathArray.length > 1) {
                     // Path does not start with given id
                     String path = o.getPath();
                     String match = "." + id + ".";
                     if (o.getId().equals(id))
                         match = "." + id;
+                    System.out.println(match);
                     String newPath = path.substring(path.indexOf(match));
                     dto.setPath(newPath.substring(1));
                     organizationDTOS.add(dto);
@@ -286,45 +280,6 @@ public class OrganizationService {
         List<OrganizationTreeNodeDTO> nodes = convertToTreeNodeDtos(organizations);
 
         return buildTree(nodes);
-    }
-
-    public void changeParentOfOrganization(Long id, Long newParentId) {
-
-        // NEEDS TO CHECK IF BOTH id AND newParentId are in the same organization!!!
-
-        // Get organization and the new parent
-        Optional<Organization> optionalOrg = organizationRepository.findById(id);
-        if (!optionalOrg.isPresent())
-            throw new NoSuchElementException();
-
-        Optional<Organization> optionalNewParent = organizationRepository.findById(newParentId);
-        if (!optionalNewParent.isPresent())
-            throw new NoSuchElementException();
-
-        Organization org = optionalOrg.get();
-        Organization newParent = optionalNewParent.get();
-
-        // Previous path of the organization and current parent
-        String[] orgPath = org.getPath().split("\\.");
-
-        if (orgPath.length <= 1)
-            throw new IllegalArgumentException("Root organizations can not be changed into sub organizations");
-
-        // Get all organizations whom are related to the organization
-        List<Organization> allRelated = organizationRepository.findByPathContains(org.getId().toString());
-
-        // organization already has a parent - replace path of parent with path of new parent
-        String prevFullPath = org.getPath();
-        String prevParentsOfOrg = prevFullPath.substring(0,prevFullPath.indexOf("." + org.getId()));
-        System.out.println("prevP " + prevParentsOfOrg);
-
-        for (Organization o : allRelated) {
-            String s = o.getId() + " " + o.getPath();
-            o.setPath(o.getPath().replace(prevParentsOfOrg, newParent.getPath()));
-            System.out.println(s + " " + o.getPath());
-        }
-
-        organizationRepository.saveAll(allRelated);
     }
 
     /**
@@ -354,6 +309,21 @@ public class OrganizationService {
         if (!optionalOrg.isPresent())
             throw new NoSuchElementException();
         organizationRepository.deleteById(id);
+    }
+
+    /**
+     * Finds all available organizations.
+     *
+     * @return the organizations found.
+     */
+    private List<OrganizationDTO> findAll() {
+        List<OrganizationDTO> orgDtos = new ArrayList<>();
+        List<Organization> orgs = organizationRepository.findAllByOrderByPathAsc();
+        for (Organization o: orgs) {
+            orgDtos.add(convertToDto(o));
+        }
+
+        return orgDtos;
     }
 
     /**

@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.*;
 
@@ -106,7 +107,7 @@ public class AuthorizationServerApplication {
 			u1.setLastname("McSudo");
 			u1.setRole("SUPERADMIN");
 			u1.setEnabled(true);
-			u1.setPassword("sudo");
+			u1.setPassword(new BCryptPasswordEncoder().encode("sudo"));
 			users.add(u1);
 
 			UserEntity u2 = new UserEntity();
@@ -115,7 +116,7 @@ public class AuthorizationServerApplication {
 			u2.setLastname("McAdmin");
 			u2.setRole("ADMIN");
 			u2.setEnabled(true);
-			u2.setPassword("kthadmin");
+			u2.setPassword(new BCryptPasswordEncoder().encode("kthadmin"));
 			u2.addOrganization(organizationHashMap.get("KTH"));
 			users.add(u2);
 
@@ -125,7 +126,7 @@ public class AuthorizationServerApplication {
 			u3.setLastname("McAdmin");
 			u3.setRole("ADMIN");
 			u3.setEnabled(true);
-			u3.setPassword("suadmin");
+			u3.setPassword(new BCryptPasswordEncoder().encode("suadmin"));
 			u3.addOrganization(organizationHashMap.get("SU"));
 			users.add(u3);
 
@@ -135,7 +136,7 @@ public class AuthorizationServerApplication {
 			u4.setLastname("McUser");
 			u4.setRole("USER");
 			u4.setEnabled(true);
-			u4.setPassword("kthuser");
+			u4.setPassword(new BCryptPasswordEncoder().encode("kthuser"));
 			u4.addOrganization(organizationHashMap.get("STH"));
 			u4.addOrganization(organizationHashMap.get("SCI"));
 			users.add(u4);
@@ -146,7 +147,7 @@ public class AuthorizationServerApplication {
 			u5.setLastname("McJonas");
 			u5.setRole("USER");
 			u5.setEnabled(true);
-			u5.setPassword("jonas");
+			u5.setPassword(new BCryptPasswordEncoder().encode("jonas"));
 			u5.addOrganization(organizationHashMap.get("Teachers"));
 			users.add(u5);
 
@@ -156,7 +157,7 @@ public class AuthorizationServerApplication {
 			u6.setLastname("McGustav");
 			u6.setRole("USER");
 			u6.setEnabled(true);
-			u6.setPassword("gustav");
+			u6.setPassword(new BCryptPasswordEncoder().encode("gustav"));
 			u6.addOrganization(organizationHashMap.get("Teachers"));
 			u6.addOrganization(organizationHashMap.get("Students"));
 			users.add(u6);
@@ -167,7 +168,7 @@ public class AuthorizationServerApplication {
 			u7.setLastname("McAndreas");
 			u7.setRole("USER");
 			u7.setEnabled(true);
-			u7.setPassword("andreas");
+			u7.setPassword(new BCryptPasswordEncoder().encode("andreas"));
 			u7.addOrganization(organizationHashMap.get("SU"));
 			users.add(u7);
 
@@ -177,7 +178,7 @@ public class AuthorizationServerApplication {
 			u8.setLastname("McErik");
 			u8.setRole("USER");
 			u8.setEnabled(true);
-			u8.setPassword("erik");
+			u8.setPassword(new BCryptPasswordEncoder().encode("erik"));
 			u8.addOrganization(organizationHashMap.get("SU"));
 			u8.addOrganization(organizationHashMap.get("Engelska Institutionen"));
 			users.add(u8);
@@ -188,7 +189,7 @@ public class AuthorizationServerApplication {
 			u9.setLastname("McBjorn");
 			u9.setRole("USER");
 			u9.setEnabled(true);
-			u9.setPassword("bjorn");
+			u9.setPassword(new BCryptPasswordEncoder().encode("bjorn"));
 			u9.addOrganization(organizationHashMap.get("Historiska institutionen"));
 			users.add(u9);
 
@@ -198,7 +199,7 @@ public class AuthorizationServerApplication {
 			u10.setLastname("McPelle");
 			u10.setRole("USER");
 			u10.setEnabled(true);
-			u10.setPassword("pelle");
+			u10.setPassword(new BCryptPasswordEncoder().encode("pelle"));
 			u10.addOrganization(organizationHashMap.get("SCI"));
 			u10.addOrganization(organizationHashMap.get("STH"));
 			users.add(u10);
@@ -209,7 +210,7 @@ public class AuthorizationServerApplication {
 			u11.setLastname("McTuva");
 			u11.setRole("USER");
 			u11.setEnabled(true);
-			u11.setPassword("tuva");
+			u11.setPassword(new BCryptPasswordEncoder().encode("tuva"));
 			u11.addOrganization(organizationHashMap.get("Engelska Institutionen"));
 			u11.addOrganization(organizationHashMap.get("Historiska institutionen"));
 			users.add(u11);
@@ -220,7 +221,7 @@ public class AuthorizationServerApplication {
 			u12.setLastname("McMeja");
 			u12.setRole("USER");
 			u12.setEnabled(true);
-			u12.setPassword("meja");
+			u12.setPassword(new BCryptPasswordEncoder().encode("meja"));
 			u12.addOrganization(organizationHashMap.get("Students"));
 			users.add(u12);
 
