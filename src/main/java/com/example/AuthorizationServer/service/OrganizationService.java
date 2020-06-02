@@ -234,34 +234,46 @@ public class OrganizationService {
      * @param id the id of the sub tree root organization.
      * @return the sub tree represented as a sorted list.
      */
-    // Fix so that 1 and 10 doesnt get mixed up.. <<<< CHECK THIS!!!
     public List<OrganizationTreeNodeDTO> getOrganizationSubTree(Long id) {
         List<Organization> organizations = organizationRepository.findByPathContainsOrderByPathAsc(id.toString());
+        for (Organization o: organizations) {
+            System.out.println(o.getPath());
+        }
         List<OrganizationDTO> organizationDTOS = new ArrayList<>();
 
         // Because of ascending sorting, the first item in organizations will be node with given id
         String[] pathArray = organizations.get(0).getPath().split("\\.");
+
         for (Organization o: organizations) {
 
             OrganizationDTO dto = convertToDto(o);
             String[] orgPathArray = dto.getPath().split("\\.");
 
-            // Result could possibly contain unwanted organization
-            if(pathArray[0].equals(id.toString())) {
-                System.out.println(o.getName() + " " + o.getPath());
-                if (pathArray.length > 1) {
-                    // Path does not start with given id
-                    String path = o.getPath();
-                    String match = "." + id + ".";
-                    if (o.getId().equals(id))
-                        match = "." + id;
-                    System.out.println(match);
-                    String newPath = path.substring(path.indexOf(match));
+            // Result of the "contains" query could possibly contain unwanted organization
+            if (pathArray.length > 1) {
+                // Path contains more than one entry so it does not start with the given id..
+                // ..therefore we need to trim the path so that it does
+
+                String path = o.getPath();
+
+                // Assume that the organization does not have the given id..
+                String match = "." + id + ".";
+                // ..but adjust match string if it does
+                if (o.getId().equals(id))
+                    match = "." + id;
+
+                int matchPosition = path.indexOf(match);
+                if (matchPosition > -1) {
+                    // Match found so organization belongs in sub tree
+                    String newPath = path.substring(matchPosition);
                     dto.setPath(newPath.substring(1));
                     organizationDTOS.add(dto);
-                } else {
-                    organizationDTOS.add(convertToDto(o));
                 }
+            } else {
+                // Path starts with given id..
+                // ..so organization belongs to sub tree if the root id matches the given id
+                if (orgPathArray[0].equals(id.toString()))
+                    organizationDTOS.add(dto);
             }
         }
 
