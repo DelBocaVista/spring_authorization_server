@@ -93,7 +93,7 @@ public class UserService {
     }
 
     /**
-     * Create a new user entity.
+     * Creates a new user entity.
      *
      * @param role the allowed role of the new user entity.
      * @param userEntityDTO the user entity dto of the new user entity.
@@ -109,7 +109,7 @@ public class UserService {
     }
 
     /**
-     * Create multiple user entities.
+     * Creates multiple user entities.
      *
      * @param userEntityDTOS the list of user entity dtos representing the new user entities to be created.
      */

@@ -149,7 +149,7 @@ public class OrganizationController {
 
         OrganizationDTO organizationDTO;
         try {
-            organizationDTO = orgService.getOrganizationDTOById(id);
+            organizationDTO = orgService.getOrganizationById(id);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

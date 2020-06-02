@@ -32,25 +32,21 @@ public class OrganizationService {
     @Autowired
     private ModelMapper modelMapper = new ModelMapper();
 
-    public OrganizationDTO getOrganizationDTOById(Long id) {
-        return convertToDto(this.getOrganizationById(id));
+    /**
+     * Fetches an organization dto from id.
+     *
+     * @param id the id of the organization dto.
+     * @return the organization dto.
+     */
+    public OrganizationDTO getOrganizationById(Long id) {
+        return convertToDto(this.getOrganizationEntityById(id));
     }
 
-    // JUST FOR SEEDING - REMOVE LATER!!
-    public Organization getOrganizationByIdSeed(Long id) {
-        return this.getOrganizationById(id);
-    }
-
-    private Organization getOrganizationById(Long id) {
-        logger.info("Fetching Organization with id {}", id);
-        Optional<Organization> optionalOrg = organizationRepository.findById(id);
-        if (!optionalOrg.isPresent()) {
-            logger.error("Organization with id {} not found.", id);
-            throw new NoSuchElementException();
-        }
-        return optionalOrg.get();
-    }
-
+    /**
+     * Fetches an organization dto from name.
+     * @param name the name of the organization dto.
+     * @return the organization dto.
+     */
     public OrganizationDTO getOrganizationByName(String name) {
         Optional<Organization> optionalOrg = organizationRepository.findByName(name);
         if (!optionalOrg.isPresent())
@@ -58,13 +54,12 @@ public class OrganizationService {
         return convertToDto(optionalOrg.get());
     }
 
-    public String getPathByName(String name) {
-        Optional<Organization> optionalOrg = organizationRepository.findByName(name);
-        if (!optionalOrg.isPresent())
-            throw new NoSuchElementException(); // ?
-        return optionalOrg.get().getPath();
-    }
-
+    /**
+     * Create a new organization.
+     *
+     * @param org the organization dto of the organization.
+     * @return the organization dto representing the new organization.
+     */
     public OrganizationDTO addOrganization(OrganizationDTO org) {
         Organization returnedOrg = organizationRepository.save(convertToEntity(org));
         returnedOrg.setPath("");
@@ -74,7 +69,7 @@ public class OrganizationService {
         return convertToDto(organizationRepository.save(orgInDb));
     }
 
-    // JUST FOR SEEDING - REMOVE LATER!!
+    // JUST FOR SEEDING - REMOVE LATER!?!
     public Organization addOrganizationSeed(Organization org) {
         Organization returnedOrg = organizationRepository.save(org);
         returnedOrg.setPath("");
@@ -84,19 +79,40 @@ public class OrganizationService {
         return organizationRepository.save(orgInDb);
     }
 
+    /**
+     * Sets an organization as the parent of another organization.
+     *
+     * @param childId the id of the intended child organization.
+     * @param parentId the id of the intended parent organization.
+     * @return the organization dto representing the updated child organization.
+     */
     public OrganizationDTO addParentToOrganization(Long childId, Long parentId) {
-        Organization child = this.getOrganizationById(childId);
-        Organization parent = this.getOrganizationById(parentId);
+        Organization child = this.getOrganizationEntityById(childId);
+        Organization parent = this.getOrganizationEntityById(parentId);
         return this.addParentToOrganization(child, parent);
     }
 
+    /**
+     * Sets an organization as the parent of another organization.
+     *
+     * @param childDto the dto version of the intended child organization.
+     * @param parentId the id of the intended parent organization.
+     * @return the organization dto representing the updated child organization.
+     */
     public OrganizationDTO addParentToOrganization(OrganizationDTO childDto, Long parentId) {
-        Organization parent = this.getOrganizationById(parentId);
+        Organization parent = this.getOrganizationEntityById(parentId);
         Organization child = convertToEntity(childDto);
         Organization childInDb = organizationRepository.save(child);
         return this.addParentToOrganization(childInDb, parent);
     }
 
+    /**
+     * Sets an organization as the parent of another organization.
+     *
+     * @param child the intended child organization.
+     * @param parent the intended parent organization.
+     * @return the organization dto representing the updated child organization.
+     */
     public OrganizationDTO addParentToOrganization(Organization child, Organization parent) {
         Optional<Organization> optionalChild = organizationRepository.findByName(child.getName());
         Optional<Organization> optionalParent = organizationRepository.findByName(parent.getName());
@@ -108,18 +124,8 @@ public class OrganizationService {
         return convertToDto(organizationRepository.save(childInDb));
     }
 
-    public List<OrganizationDTO> getAllRootParentOrganizations() {
-        // Only root parent organizations has just one id in path and therefore also no "." delimiter.
-        List<Organization> result = organizationRepository.findByPathNotContaining(".");
-        List<OrganizationDTO> resultDTO = new ArrayList<>();
-        for (Organization o: result) {
-            resultDTO.add(convertToDto(o));
-        }
-        return resultDTO;
-    }
-
     /**
-     * Returns all the sub organizations of a given parent.
+     * Fetches all the sub organizations of a given parent.
      *
      * @param parentId the id of the parent organization.
      * @return the sub organizations of the parent.
@@ -129,9 +135,9 @@ public class OrganizationService {
         if (!optionalParent.isPresent())
             throw new NoSuchElementException(); // ?
         Organization parentInDB = optionalParent.get();
+
         List<Organization> orgs = organizationRepository.findByPathStartsWith(parentInDB.getPath());
-        if(orgs.contains(parentInDB))
-            orgs.remove(parentInDB);
+        orgs.remove(parentInDB);
 
         List<OrganizationDTO> orgDtos = new ArrayList<>();
         for (Organization o: orgs) {
@@ -140,21 +146,11 @@ public class OrganizationService {
         return orgDtos;
     }
 
-    public List<OrganizationDTO> getDirectChildrenOfOrganization(OrganizationDTO parent) {
-        Optional<Organization> optionalParent = organizationRepository.findByName(parent.getName());
-        if (!optionalParent.isPresent())
-            throw new NoSuchElementException(); // ?
-        Organization parentInDB = optionalParent.get();
-        List<Organization> orgs = organizationRepository.findByPathContains(parentInDB.getId().toString());
-        List<OrganizationDTO> result = new ArrayList<>();
-        for (Organization o: orgs) {
-            String[] path = o.getPath().split("\\.");
-            if (path.length == 2)
-                result.add(convertToDto(o));
-        }
-        return result;
-    }
-
+    /**
+     * Fetches all organizations.
+     *
+     * @return the organizations found.
+     */
     public List<OrganizationDTO> getAllOrganizations() {
         return this.findAll();
     }
@@ -169,6 +165,13 @@ public class OrganizationService {
         return orgDtos;
     }
 
+    /**
+     * Checks if an organization is a child of another organization.
+     *
+     * @param childId the id of the child organization.
+     * @param parentId the id of the parent organization.
+     * @return true if the organization is a child of the parent otherwise false.
+     */
     public boolean isOrganizationChildOfRootParent(Long childId, Long parentId) {
         Optional<Organization> optionalChild = organizationRepository.findById(childId);
         if(!optionalChild.isPresent())
@@ -190,6 +193,11 @@ public class OrganizationService {
         return false;
     }
 
+    /**
+     * Fetches all root organizations.
+     *
+     * @return the root organizations found.
+     */
     public List<OrganizationDTO> getAllRootOrganizations() {
         List<OrganizationDTO> organizationDTOS = this.getAllOrganizations();
         List<OrganizationDTO> result = new ArrayList<>();
@@ -201,6 +209,12 @@ public class OrganizationService {
         return result;
     }
 
+    /**
+     * Checks if an organization is a root organization.
+     *
+     * @param id the id of the organization.
+     * @return true if the organization is a root organization otherwise false.
+     */
     public boolean isRootOrganization(Long id) {
         Optional<Organization> optionalOrganization = organizationRepository.findById(id);
         if(!optionalOrganization.isPresent())
@@ -215,6 +229,12 @@ public class OrganizationService {
         return true;
     }
 
+    /**
+     * Fetches the root organization that a given organization belongs to.
+     *
+     * @param id the id of the organization.
+     * @return the root organization.
+     */
     public OrganizationDTO getRootParentOfOrganization(Long id) {
         Optional<Organization> optionalOrganization = organizationRepository.findById(id);
         if(!optionalOrganization.isPresent())
@@ -228,7 +248,13 @@ public class OrganizationService {
         return convertToDto(rootParent);
     }
 
-    // Fix so that 1 and 10 doesnt get mixed up..
+    /**
+     * Fetches the sub tree of organizations with a given organization as root.
+     *
+     * @param id the id of the sub tree root organization.
+     * @return the sub tree represented as a sorted list.
+     */
+    // Fix so that 1 and 10 doesnt get mixed up.. <<<< CHECK THIS!!!
     public List<OrganizationTreeNodeDTO> getOrganizationSubTree(Long id) {
         List<Organization> organizations = organizationRepository.findByPathContainsOrderByPathAsc(id.toString());
         List<OrganizationDTO> organizationDTOS = new ArrayList<>();
@@ -237,17 +263,21 @@ public class OrganizationService {
         String[] pathArray = organizations.get(0).getPath().split("\\.");
         for (Organization o: organizations) {
             OrganizationDTO dto = convertToDto(o);
-            if(pathArray.length > 1) {
-                // Path does not start with given id
-                String path = o.getPath();
-                String match = "." + id + ".";
-                if(o.getId().equals(id))
-                    match = "." + id;
-                String newPath = path.substring(path.indexOf(match));
-                dto.setPath(newPath.substring(1));
-                organizationDTOS.add(dto);
-            } else {
-                organizationDTOS.add(convertToDto(o));
+
+            // Result could possibly contain unwanted organization
+            if(pathArray[0].equals(id.toString())) {
+                if (pathArray.length > 1) {
+                    // Path does not start with given id
+                    String path = o.getPath();
+                    String match = "." + id + ".";
+                    if (o.getId().equals(id))
+                        match = "." + id;
+                    String newPath = path.substring(path.indexOf(match));
+                    dto.setPath(newPath.substring(1));
+                    organizationDTOS.add(dto);
+                } else {
+                    organizationDTOS.add(convertToDto(o));
+                }
             }
         }
 
@@ -331,6 +361,22 @@ public class OrganizationService {
         if (!optionalOrg.isPresent())
             throw new NoSuchElementException();
         organizationRepository.deleteById(id);
+    }
+
+    /**
+     * Fetches an organization from id.
+     *
+     * @param id the id of the organization.
+     * @return the organization.
+     */
+    private Organization getOrganizationEntityById(Long id) {
+        logger.info("Fetching Organization with id {}", id);
+        Optional<Organization> optionalOrg = organizationRepository.findById(id);
+        if (!optionalOrg.isPresent()) {
+            logger.error("Organization with id {} not found.", id);
+            throw new NoSuchElementException();
+        }
+        return optionalOrg.get();
     }
 
     /**
