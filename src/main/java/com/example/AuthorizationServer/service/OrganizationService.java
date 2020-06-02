@@ -271,30 +271,21 @@ public class OrganizationService {
             }
         }
 
-        List<OrganizationTreeNodeDTO> nodes = convertToTreeNodeDto(organizationDTOS);
+        List<OrganizationTreeNodeDTO> nodes = convertToTreeNodeDtos(organizationDTOS);
 
         return buildTree(nodes);
     }
 
+    /**
+     * Fetches the organization tree structures of all organization currently in the system.
+     *
+     * @return the tree structures.
+     */
     public List<OrganizationTreeNodeDTO> getFullOrganizationTree() {
         List<OrganizationDTO> organizations = this.findAll();
-        List<OrganizationTreeNodeDTO> nodes = convertToTreeNodeDto(organizations);
+        List<OrganizationTreeNodeDTO> nodes = convertToTreeNodeDtos(organizations);
 
         return buildTree(nodes);
-    }
-
-    private List<OrganizationTreeNodeDTO> convertToTreeNodeDto(List<OrganizationDTO> organizations) {
-        List<OrganizationTreeNodeDTO> nodes = new ArrayList<>();
-
-        for (OrganizationDTO o: organizations) {
-            OrganizationTreeNodeDTO n = new OrganizationTreeNodeDTO();
-            n.setId(o.getId());
-            n.setName(o.getName());
-            n.setPath(o.getPath());
-            n.setEnabled(o.getEnabled());
-            nodes.add(n);
-        }
-        return nodes;
     }
 
     public void changeParentOfOrganization(Long id, Long newParentId) {
@@ -336,6 +327,13 @@ public class OrganizationService {
         organizationRepository.saveAll(allRelated);
     }
 
+    /**
+     * Updates an existing organization.
+     *
+     * @param id the id of the organization to be updated.
+     * @param organizationDTO the updated organization dto version of the organization to be updated.
+     * @return the organization dto representing the updated organization.
+     */
     public OrganizationDTO updateOrganization(Long id, OrganizationDTO organizationDTO) {
         Optional<Organization> optionalOrg = organizationRepository.findById(id);
         if (!optionalOrg.isPresent())
@@ -346,6 +344,11 @@ public class OrganizationService {
         return convertToDto(organizationRepository.save(updatedOrganization));
     }
 
+    /**
+     * Deletes an organization.
+     *
+     * @param id the id of the organization to be deleted.
+     */
     public void deleteOrganization(Long id) {
         Optional<Organization> optionalOrg = organizationRepository.findById(id);
         if (!optionalOrg.isPresent())
@@ -370,9 +373,10 @@ public class OrganizationService {
     }
 
     /**
-     * Convert organization to organization dto
-     * @param organization the organization to convert
-     * @return the corresponding user entity dto
+     * Converts an organization to an organization dto.
+     *
+     * @param organization the organization to convert.
+     * @return the corresponding user entity dto.
      */
     private OrganizationDTO convertToDto(Organization organization) {
         OrganizationDTO organizationDTO = modelMapper.map(organization, OrganizationDTO.class);
@@ -383,9 +387,10 @@ public class OrganizationService {
     }
 
     /**
-     * Convert organization dto to organization entity
-     * @param organizationDto the organization dto to convert
-     * @return the corresponding organization entity
+     * Converts an organization dto to an organization entity.
+     *
+     * @param organizationDto the organization dto to convert.
+     * @return the corresponding organization entity.
      */
     private Organization convertToEntity(OrganizationDTO organizationDto) throws ParseException {
         Organization organization = modelMapper.map(organizationDto, Organization.class);
@@ -395,23 +400,54 @@ public class OrganizationService {
         return organization;
     }
 
+    /**
+     * Converts a organization dtos to a organization tree node dtos.
+     *
+     * @param organizations the organizations to be converted.
+     * @return the corresponding organization tree node dtos.
+     */
+    private List<OrganizationTreeNodeDTO> convertToTreeNodeDtos(List<OrganizationDTO> organizations) {
+        List<OrganizationTreeNodeDTO> nodes = new ArrayList<>();
+
+        for (OrganizationDTO o: organizations) {
+            OrganizationTreeNodeDTO n = new OrganizationTreeNodeDTO();
+            n.setId(o.getId());
+            n.setName(o.getName());
+            n.setPath(o.getPath());
+            n.setEnabled(o.getEnabled());
+            nodes.add(n);
+        }
+        return nodes;
+    }
+
+    /**
+     * Builds organization tree structures consisting of linked organization tree nodes.
+     *
+     * @param nodes the organization tree node dtos to build the tree structures from.
+     * @return the tree structures.
+     */
     private static List<OrganizationTreeNodeDTO> buildTree(List<OrganizationTreeNodeDTO> nodes) {
+
         HashMap<String, OrganizationTreeNodeDTO> map = new HashMap<>();
+
         for (OrganizationTreeNodeDTO n: nodes) {
             map.put(n.getId().toString(), n);
         }
+
         List<OrganizationTreeNodeDTO> tree = new ArrayList<>();
+
         for (OrganizationTreeNodeDTO n: nodes) {
             String[] path = n.getPath().split("\\.");
             if (path.length == 1) {
                 tree.add(n);
             } else {
-                // find nearest parent
+                // find nearest parent, i.e. the second to last organization id in the path
                 OrganizationTreeNodeDTO parent = map.get(path[path.length - 2]);
                 // add self as child
                 parent.addSubOrganization(n);
             }
         }
+
         return tree;
     }
 }

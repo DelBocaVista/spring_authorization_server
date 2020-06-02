@@ -148,7 +148,7 @@ public class UserService {
     }
 
     /**
-     * Update an existing user entity.
+     * Updates an existing user entity.
      *
      * @param role the allowed role of the user entity.
      * @param id the id of the the user entity to be updated.
