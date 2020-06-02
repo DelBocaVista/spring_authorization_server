@@ -61,9 +61,6 @@ public class AuthorizationServerApplication {
 	@Autowired
 	private OrganizationRepository orgRep;
 
-	@Autowired
-	private OrganizationService orgService;
-
 	@Bean
 	InitializingBean seedDatabase() {
 		return () -> {

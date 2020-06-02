@@ -69,16 +69,6 @@ public class OrganizationService {
         return convertToDto(organizationRepository.save(orgInDb));
     }
 
-    // JUST FOR SEEDING - REMOVE LATER!?!
-    public Organization addOrganizationSeed(Organization org) {
-        Organization returnedOrg = organizationRepository.save(org);
-        returnedOrg.setPath("");
-        Optional<Organization> optionalOrg = organizationRepository.findByName(returnedOrg.getName());
-        Organization orgInDb = optionalOrg.get();
-        orgInDb.setParent(orgInDb);
-        return organizationRepository.save(orgInDb);
-    }
-
     /**
      * Sets an organization as the parent of another organization.
      *
