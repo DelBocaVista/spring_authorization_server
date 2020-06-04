@@ -235,13 +235,11 @@ public class OrganizationService {
      * @return the sub tree represented as a sorted list.
      */
     public List<OrganizationTreeNodeDTO> getOrganizationSubTree(Long id) {
+
         List<Organization> organizations = organizationRepository.findByPathContainsOrderByPathAsc(id.toString());
-        for (Organization o: organizations) {
-            System.out.println(o.getPath());
-        }
         List<OrganizationDTO> organizationDTOS = new ArrayList<>();
 
-        // Because of ascending sorting, the first item in organizations will be node with given id
+        // Because of ascending sorting in list, the first item in organizations will be node with given id
         String[] pathArray = organizations.get(0).getPath().split("\\.");
 
         for (Organization o: organizations) {
