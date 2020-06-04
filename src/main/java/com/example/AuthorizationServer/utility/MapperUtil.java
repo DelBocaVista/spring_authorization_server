@@ -2,10 +2,10 @@ package com.example.AuthorizationServer.utility;
 
 import com.example.AuthorizationServer.bo.dto.OrganizationDTO;
 import com.example.AuthorizationServer.bo.dto.OrganizationTreeNodeDTO;
-import com.example.AuthorizationServer.bo.dto.UserEntityDTO;
-import com.example.AuthorizationServer.bo.dto.UserEntityExtendedDTO;
+import com.example.AuthorizationServer.bo.dto.UserDTO;
+import com.example.AuthorizationServer.bo.dto.UserExtendedDTO;
 import com.example.AuthorizationServer.bo.entity.Organization;
-import com.example.AuthorizationServer.bo.entity.UserEntity;
+import com.example.AuthorizationServer.bo.entity.User;
 import org.modelmapper.ModelMapper;
 import org.springframework.expression.ParseException;
 import org.springframework.stereotype.Service;
@@ -26,77 +26,70 @@ public class MapperUtil {
     private ModelMapper modelMapper = new ModelMapper();
 
     /**
-     * Converts a user entity and its organization entity memberships into a user entity dto with organization dto
-     * memberships.
-     * @param userEntity the user entity to convert
-     * @return the corresponding user entity dto
+     * Converts a user and its organization memberships into a user dto with organization dto memberships.
+     *
+     * @param user the user to convert
+     * @return the corresponding user dto
      */
-    public UserEntityDTO convertUserEntityToDto(UserEntity userEntity) {
+    public UserDTO convertUserEntityToDto(User user) {
         Set<OrganizationDTO> orgDtos = new HashSet<>();
 
-        for (Organization o: userEntity.getOrganizations()) {
+        for (Organization o: user.getOrganizations()) {
             orgDtos.add(convertToDto(o));
         }
 
-        UserEntityDTO userEntityDTO = convertToDto(userEntity);
-        userEntityDTO.setOrganizations(orgDtos);
+        UserDTO userDTO = convertToDto(user);
+        userDTO.setOrganizations(orgDtos);
 
-        return userEntityDTO;
+        return userDTO;
     }
 
     /**
-     * Convert user entity to user entity dto excluding organization memberships
-     * @param userEntity the user entity to convert
-     * @return the corresponding user entity dto
+     * Convert user to user dto excluding organization memberships.
+     *
+     * @param user the user to convert.
+     * @return the corresponding user dto.
      */
-    public UserEntityDTO convertToDto(UserEntity userEntity) {
-        UserEntityDTO userEntityDTO = modelMapper.map(userEntity, UserEntityDTO.class);
-
-        // Do something else if needed..?
-
-        return userEntityDTO;
+    public UserDTO convertToDto(User user) {
+        UserDTO userDTO = modelMapper.map(user, UserDTO.class);
+        return userDTO;
     }
 
     /**
-     * Convert organization to organization dto
-     * @param organization the organization to convert
-     * @return the corresponding user entity dto
+     * Convert organization to organization dto.
+     *
+     * @param organization the organization to convert.
+     * @return the corresponding organization dto.
      */
     public OrganizationDTO convertToDto(Organization organization) {
         OrganizationDTO organizationDTO = modelMapper.map(organization, OrganizationDTO.class);
-
-        // Do something else if needed..?
-
         return organizationDTO;
     }
 
     /**
-     * Convert user entity dto to user entity
-     * @param organizationDto the user entity dto to convert
-     * @return the corresponding user entity
+     * Convert user dto to user.
+     *
+     * @param organizationDto the user dto to convert.
+     * @return the corresponding user.
      */
     public Organization convertToEntity(OrganizationDTO organizationDto) throws ParseException {
         Organization organization = modelMapper.map(organizationDto, Organization.class);
-
-        // Do something else if needed..?
-
         return organization;
     }
 
     /**
-     * Convert user entity dto to user entity
-     * @param userEntityDto the user entity dto to convert
-     * @return the corresponding user entity
+     * Convert extended user dto to user.
+     *
+     * @param userDto the user dto to convert.
+     * @return the corresponding user.
      */
-    public UserEntity convertToEntity(UserEntityExtendedDTO userEntityDto) throws ParseException {
-        UserEntity newUser = modelMapper.map(userEntityDto, UserEntity.class);
-        /*Optional<UserEntity> user = this.getUserById(userEntityDto.getId());
-        return user.orElse(null);*/
+    public User convertToEntity(UserExtendedDTO userDto) throws ParseException {
+        User newUser = modelMapper.map(userDto, User.class);
         return newUser;
     }
 
     /**
-     * Converts a organization dtos to a organization tree node dtos.
+     * Converts organization dtos to organization tree node dtos.
      *
      * @param organizations the organizations to be converted.
      * @return the corresponding organization tree node dtos.

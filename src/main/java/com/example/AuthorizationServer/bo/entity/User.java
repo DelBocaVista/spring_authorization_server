@@ -9,12 +9,11 @@ import java.util.Set;
 /**
  * @author Jonas Fredén-Lundvall (jonlundv@kth.se)
  *
- * Represents a User of the booking system. The name UserEntity is used instead of User due to a naming conflict with
- * the UserDetailsService class User
+ * Represents a user of the booking system.
  */
 @Entity
 @Table(name = "user")
-public class UserEntity implements Serializable {
+public class User implements Serializable {
 
     // Constants ----------------------------------------------------------------------------------
     private static final long serialVersionUID = 1L;
@@ -74,11 +73,11 @@ public class UserEntity implements Serializable {
     public void setRole(String role) { this.role = role; }
 
     // Constructors -------------------------------------------------------------------------------
-    public UserEntity() {
+    public User() {
         this.organizations = new HashSet<>();
     }
 
-    public UserEntity(String firstname, String lastname, String username, String password, String role, Set<Organization> organizations) {
+    public User(String firstname, String lastname, String username, String password, String role, Set<Organization> organizations) {
         this.firstname = firstname;
         this.lastname = lastname;
         this.username = username;
@@ -88,7 +87,7 @@ public class UserEntity implements Serializable {
         this.enabled = true;
     }
 
-    public UserEntity(String username, String password) { // Initial for testing only
+    public User(String username, String password) { // Initial for testing only
         this.username = username;
         this.password = password;
     }
@@ -105,7 +104,7 @@ public class UserEntity implements Serializable {
 
     @Override
     public String toString() {
-        return "UserEntity{" +
+        return "User{" +
                 "id=" + id +
                 ", firstname='" + firstname + '\'' +
                 ", lastname='" + lastname + '\'' +

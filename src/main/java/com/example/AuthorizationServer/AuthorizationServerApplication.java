@@ -1,9 +1,8 @@
 package com.example.AuthorizationServer;
 
-import com.example.AuthorizationServer.bo.entity.UserEntity;
+import com.example.AuthorizationServer.bo.entity.User;
 import com.example.AuthorizationServer.repository.OrganizationRepository;
-import com.example.AuthorizationServer.repository.UserEntityRepository;
-import com.example.AuthorizationServer.service.OrganizationService;
+import com.example.AuthorizationServer.repository.UserRepository;
 import com.example.AuthorizationServer.bo.entity.Organization;
 import com.example.AuthorizationServer.service.UserService;
 import org.modelmapper.ModelMapper;
@@ -39,7 +38,7 @@ public class AuthorizationServerApplication {
 		// Adding super admin user "sudo" to database if does not already exist (see comment below for an example of how
 		// a more extensive seeding of the database could be performed).
 		return () -> {
-			UserEntity sudo = new UserEntity();
+			User sudo = new User();
 			sudo.setUsername("sudo");
 			sudo.setFirstname("Sudo");
 			sudo.setLastname("McSudo");
@@ -58,7 +57,7 @@ public class AuthorizationServerApplication {
 	// Example of extensive seeding of the database.
 
 	@Autowired
-	private UserEntityRepository userRep;
+	private UserRepository userRep;
 	@Autowired
 	private OrganizationRepository orgRep;
 
@@ -99,9 +98,9 @@ public class AuthorizationServerApplication {
 			}
 
 			// USERS
-			List<UserEntity> users = new ArrayList<>();
+			List<User> users = new ArrayList<>();
 
-			UserEntity u1 = new UserEntity();
+			User u1 = new User();
 			u1.setUsername("sudo");
 			u1.setFirstname("Sudo");
 			u1.setLastname("McSudo");
@@ -110,7 +109,7 @@ public class AuthorizationServerApplication {
 			u1.setPassword(new BCryptPasswordEncoder().encode("sudo"));
 			users.add(u1);
 
-			UserEntity u2 = new UserEntity();
+			User u2 = new User();
 			u2.setUsername("kthadmin");
 			u2.setFirstname("Admin");
 			u2.setLastname("McAdmin");
@@ -120,7 +119,7 @@ public class AuthorizationServerApplication {
 			u2.addOrganization(organizationHashMap.get("KTH"));
 			users.add(u2);
 
-			UserEntity u3 = new UserEntity();
+			User u3 = new User();
 			u3.setUsername("suadmin");
 			u3.setFirstname("Admin");
 			u3.setLastname("McAdmin");
@@ -130,7 +129,7 @@ public class AuthorizationServerApplication {
 			u3.addOrganization(organizationHashMap.get("SU"));
 			users.add(u3);
 
-			UserEntity u4 = new UserEntity();
+			User u4 = new User();
 			u4.setUsername("kthuser");
 			u4.setFirstname("User");
 			u4.setLastname("McUser");
@@ -141,7 +140,7 @@ public class AuthorizationServerApplication {
 			u4.addOrganization(organizationHashMap.get("SCI"));
 			users.add(u4);
 
-			UserEntity u5 = new UserEntity();
+			User u5 = new User();
 			u5.setUsername("jonas");
 			u5.setFirstname("Jonas");
 			u5.setLastname("McJonas");
@@ -151,7 +150,7 @@ public class AuthorizationServerApplication {
 			u5.addOrganization(organizationHashMap.get("Teachers"));
 			users.add(u5);
 
-			UserEntity u6 = new UserEntity();
+			User u6 = new User();
 			u6.setUsername("gustav");
 			u6.setFirstname("Gustav");
 			u6.setLastname("McGustav");
@@ -162,7 +161,7 @@ public class AuthorizationServerApplication {
 			u6.addOrganization(organizationHashMap.get("Students"));
 			users.add(u6);
 
-			UserEntity u7 = new UserEntity();
+			User u7 = new User();
 			u7.setUsername("andreas");
 			u7.setFirstname("Andreas");
 			u7.setLastname("McAndreas");
@@ -172,7 +171,7 @@ public class AuthorizationServerApplication {
 			u7.addOrganization(organizationHashMap.get("SU"));
 			users.add(u7);
 
-			UserEntity u8 = new UserEntity();
+			User u8 = new User();
 			u8.setUsername("erik");
 			u8.setFirstname("Erik");
 			u8.setLastname("McErik");
@@ -183,7 +182,7 @@ public class AuthorizationServerApplication {
 			u8.addOrganization(organizationHashMap.get("Engelska Institutionen"));
 			users.add(u8);
 
-			UserEntity u9 = new UserEntity();
+			User u9 = new User();
 			u9.setUsername("bjorn");
 			u9.setFirstname("Bjorn");
 			u9.setLastname("McBjorn");
@@ -193,7 +192,7 @@ public class AuthorizationServerApplication {
 			u9.addOrganization(organizationHashMap.get("Historiska institutionen"));
 			users.add(u9);
 
-			UserEntity u10 = new UserEntity();
+			User u10 = new User();
 			u10.setUsername("pelle");
 			u10.setFirstname("Pelle");
 			u10.setLastname("McPelle");
@@ -204,7 +203,7 @@ public class AuthorizationServerApplication {
 			u10.addOrganization(organizationHashMap.get("STH"));
 			users.add(u10);
 
-			UserEntity u11 = new UserEntity();
+			User u11 = new User();
 			u11.setUsername("tuva");
 			u11.setFirstname("Tuva");
 			u11.setLastname("McTuva");
@@ -215,7 +214,7 @@ public class AuthorizationServerApplication {
 			u11.addOrganization(organizationHashMap.get("Historiska institutionen"));
 			users.add(u11);
 
-			UserEntity u12 = new UserEntity();
+			User u12 = new User();
 			u12.setUsername("meja");
 			u12.setFirstname("Meja");
 			u12.setLastname("McMeja");

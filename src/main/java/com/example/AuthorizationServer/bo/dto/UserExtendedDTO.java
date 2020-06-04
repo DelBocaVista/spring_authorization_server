@@ -5,10 +5,10 @@ import java.util.Set;
 /**
  * @author Jonas Fredén-Lundvall (jonlundv@kth.se)
  *
- * Subclass of UserEntityDTO containing an additional password property. Used for data transfer when attempting to add
- * or update a UserEntity.
+ * Subclass of UserDTO containing an additional password property. Used for data transfer when attempting to add
+ * or update a User.
  */
-public class UserEntityExtendedDTO extends UserEntityDTO {
+public class UserExtendedDTO extends UserDTO {
 
     // Properties ---------------------------------------------------------------------------------
     private String password;
@@ -18,11 +18,11 @@ public class UserEntityExtendedDTO extends UserEntityDTO {
     public void setPassword(String password) { this.password = password; }
 
     // Constructors -------------------------------------------------------------------------------
-    public UserEntityExtendedDTO() {
+    public UserExtendedDTO() {
         super();
     }
 
-    public UserEntityExtendedDTO(Long id, String firstname, String lastname, String username, String password, String role, Boolean enabled, Set<OrganizationDTO> organizations) {
+    public UserExtendedDTO(Long id, String firstname, String lastname, String username, String password, String role, Boolean enabled, Set<OrganizationDTO> organizations) {
         super(id, firstname, lastname, username, role, enabled, organizations);
         this.password = password;
     }

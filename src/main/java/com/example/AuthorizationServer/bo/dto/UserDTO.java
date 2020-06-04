@@ -5,9 +5,9 @@ import java.util.Set;
 /**
  * @author Jonas Fredén-Lundvall (jonlundv@kth.se)
  *
- * Data transfer object for UserEntity.
+ * Data transfer object for User.
  */
-public class UserEntityDTO {
+public class UserDTO {
 
     // Properties ---------------------------------------------------------------------------------
     private Long id;
@@ -42,10 +42,10 @@ public class UserEntityDTO {
     public void setOrganizations(Set<OrganizationDTO> organizations) { this.organizations = organizations; }
 
     // Constructors -------------------------------------------------------------------------------
-    public UserEntityDTO() {
+    public UserDTO() {
     }
 
-    public UserEntityDTO(Long id, String firstname, String lastname, String username, String role, Boolean enabled, Set<OrganizationDTO> organizations) {
+    public UserDTO(Long id, String firstname, String lastname, String username, String role, Boolean enabled, Set<OrganizationDTO> organizations) {
         this.id = id;
         this.firstname = firstname;
         this.lastname = lastname;
@@ -59,10 +59,10 @@ public class UserEntityDTO {
     public boolean equals(Object obj) {
         if(obj == null)
             return false;
-        if(!(obj instanceof UserEntityDTO))
+        if(!(obj instanceof UserDTO))
             return false;
 
-        UserEntityDTO other = (UserEntityDTO) obj;
+        UserDTO other = (UserDTO) obj;
         return this.id == other.id;
     }
 

@@ -13,6 +13,7 @@ public class UserDetailExtractor {
 
     /**
      * Extract custom user details from security context.
+     *
      * @param context the security context.
      * @return the custom user details.
      */
