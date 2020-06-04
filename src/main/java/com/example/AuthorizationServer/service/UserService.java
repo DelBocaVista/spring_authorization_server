@@ -90,7 +90,13 @@ public class UserService {
         return userEntityRepository.findById(id);
     }
 
-    public List<UserEntityDTO> getAllActiveUsersByRole(String role, Authentication auth) {
+    /**
+     * Fetches user entities from role.
+     *
+     * @param role the role of the user entities.
+     * @return the user entities found.
+     */
+    public List<UserEntityDTO> getAllActiveUsersByRole(String role) {
 
         List<UserEntity> userEntities = userEntityRepository.findAllByRoleAndEnabled(role, true);
         List<UserEntityDTO> userEntityDTOS = new ArrayList<>();

@@ -49,7 +49,7 @@ public class AdminController {
      */
     @GetMapping("admins/")
     public ResponseEntity<?> getAllAdmins() {
-        List<UserEntityDTO> userEntityDTOS = userService.getAllActiveUsersByRole(role, SecurityContextHolder.getContext().getAuthentication());
+        List<UserEntityDTO> userEntityDTOS = userService.getAllActiveUsersByRole(role);
         return new ResponseEntity<>(userEntityDTOS, HttpStatus.OK);
     }
 
