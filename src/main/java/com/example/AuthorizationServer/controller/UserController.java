@@ -37,17 +37,21 @@ public class UserController {
     // Admin is only authorized to handle user entities with admin role
     private final String role = "USER";
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+
+    private final OrganizationService orgService;
 
     @Autowired
-    private OrganizationService orgService;
+    public UserController(UserService userService, OrganizationService orgService) {
+        this.userService = userService;
+        this.orgService = orgService;
+    }
 
     /**
      * Retrieve all user entities with role user.
      *
-     * @param limit
-     * @param offset
+     * @param limit the upper limit of how many user entities to retrieve.
+     * @param offset the offset for where in the ordered listing to start retrieving user entities.
      * @return the response entity.
      */
     @GetMapping("/")

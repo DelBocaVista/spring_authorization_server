@@ -1,11 +1,10 @@
 package com.example.AuthorizationServer.security;
 
 import com.example.AuthorizationServer.bo.dto.OrganizationDTO;
-import com.example.AuthorizationServer.bo.dto.UserEntityDTO;
 import com.example.AuthorizationServer.bo.entity.Organization;
 import com.example.AuthorizationServer.bo.entity.UserEntity;
 import com.example.AuthorizationServer.service.UserService;
-import org.modelmapper.ModelMapper;
+import com.example.AuthorizationServer.utility.MapperUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -26,11 +25,15 @@ import java.util.Set;
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+
+    private final MapperUtil mapperUtil;
 
     @Autowired
-    private ModelMapper modelMapper = new ModelMapper();
+    public CustomUserDetailsService(UserService userService, MapperUtil mapperUtil) {
+        this.userService = userService;
+        this.mapperUtil = mapperUtil;
+    }
 
     /**
      * {@inheritDoc}
@@ -45,14 +48,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         Set<Organization> organizations = userEntity.getOrganizations();
         Set<OrganizationDTO> organizationDTOS = new HashSet<>();
         for (Organization o: organizations) {
-            organizationDTOS.add(convertToDto(o));
+            organizationDTOS.add(mapperUtil.convertToDto(o));
         }
 
         return new CustomUserDetails(userEntity.getUsername(), userEntity.getPassword(), Arrays.asList(authority),
                 userEntity.getId(), organizationDTOS);
-    }
-
-    private OrganizationDTO convertToDto(Organization organization) {
-        return modelMapper.map(organization, OrganizationDTO.class);
     }
 }

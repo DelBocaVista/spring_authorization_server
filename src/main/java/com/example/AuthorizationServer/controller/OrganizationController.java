@@ -31,8 +31,12 @@ public class OrganizationController {
 
     private static final Logger logger = LoggerFactory.getLogger(OrganizationController.class);
 
+    private final OrganizationService orgService;
+
     @Autowired
-    private OrganizationService orgService;
+    public OrganizationController(OrganizationService orgService) {
+        this.orgService = orgService;
+    }
 
     /**
      * Retrieve all organisations.

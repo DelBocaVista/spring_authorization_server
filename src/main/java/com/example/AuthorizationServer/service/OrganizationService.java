@@ -5,11 +5,10 @@ import com.example.AuthorizationServer.bo.dto.OrganizationTreeNodeDTO;
 import com.example.AuthorizationServer.bo.entity.Organization;
 import com.example.AuthorizationServer.controller.UserController;
 import com.example.AuthorizationServer.repository.OrganizationRepository;
-import org.modelmapper.ModelMapper;
+import com.example.AuthorizationServer.utility.MapperUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.expression.ParseException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,11 +25,15 @@ public class OrganizationService {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
-    @Autowired
-    private OrganizationRepository organizationRepository;
+    private final OrganizationRepository organizationRepository;
+
+    private final MapperUtil mapperUtil;
 
     @Autowired
-    private ModelMapper modelMapper = new ModelMapper();
+    public OrganizationService(OrganizationRepository organizationRepository, MapperUtil mapperUtil) {
+        this.organizationRepository = organizationRepository;
+        this.mapperUtil = mapperUtil;
+    }
 
     /**
      * Fetches an organization dto from id.
@@ -39,7 +42,7 @@ public class OrganizationService {
      * @return the organization dto.
      */
     public OrganizationDTO getOrganizationById(Long id) {
-        return convertToDto(this.getOrganizationEntityById(id));
+        return mapperUtil.convertToDto(this.getOrganizationEntityById(id));
     }
 
     /**
@@ -51,7 +54,7 @@ public class OrganizationService {
         Optional<Organization> optionalOrg = organizationRepository.findByName(name);
         if (!optionalOrg.isPresent())
             throw new NoSuchElementException(); // ?
-        return convertToDto(optionalOrg.get());
+        return mapperUtil.convertToDto(optionalOrg.get());
     }
 
     /**
@@ -61,12 +64,12 @@ public class OrganizationService {
      * @return the organization dto representing the new organization.
      */
     public OrganizationDTO addOrganization(OrganizationDTO org) {
-        Organization returnedOrg = organizationRepository.save(convertToEntity(org));
+        Organization returnedOrg = organizationRepository.save(mapperUtil.convertToEntity(org));
         returnedOrg.setPath("");
         Optional<Organization> optionalOrg = organizationRepository.findByName(returnedOrg.getName());
         Organization orgInDb = optionalOrg.get();
         orgInDb.setParent(orgInDb);
-        return convertToDto(organizationRepository.save(orgInDb));
+        return mapperUtil.convertToDto(organizationRepository.save(orgInDb));
     }
 
     /**
@@ -91,7 +94,7 @@ public class OrganizationService {
      */
     public OrganizationDTO addParentToOrganization(OrganizationDTO childDto, Long parentId) {
         Organization parent = this.getOrganizationEntityById(parentId);
-        Organization child = convertToEntity(childDto);
+        Organization child = mapperUtil.convertToEntity(childDto);
         Organization childInDb = organizationRepository.save(child);
         return this.addParentToOrganization(childInDb, parent);
     }
@@ -111,7 +114,7 @@ public class OrganizationService {
         Organization childInDb = optionalChild.get();
         Organization parentInDb = optionalParent.get();
         childInDb.setParent(parentInDb);
-        return convertToDto(organizationRepository.save(childInDb));
+        return mapperUtil.convertToDto(organizationRepository.save(childInDb));
     }
 
     /**
@@ -131,7 +134,7 @@ public class OrganizationService {
 
         List<OrganizationDTO> orgDtos = new ArrayList<>();
         for (Organization o: orgs) {
-            orgDtos.add(convertToDto(o));
+            orgDtos.add(mapperUtil.convertToDto(o));
         }
         return orgDtos;
     }
@@ -225,7 +228,7 @@ public class OrganizationService {
         if(!optionalRootParent.isPresent())
             throw new NoSuchElementException();
         Organization rootParent = optionalRootParent.get();
-        return convertToDto(rootParent);
+        return mapperUtil.convertToDto(rootParent);
     }
 
     /**
@@ -244,7 +247,7 @@ public class OrganizationService {
 
         for (Organization o: organizations) {
 
-            OrganizationDTO dto = convertToDto(o);
+            OrganizationDTO dto = mapperUtil.convertToDto(o);
             String[] orgPathArray = dto.getPath().split("\\.");
 
             // Result of the "contains" query could possibly contain unwanted organization
@@ -275,7 +278,7 @@ public class OrganizationService {
             }
         }
 
-        List<OrganizationTreeNodeDTO> nodes = convertToTreeNodeDtos(organizationDTOS);
+        List<OrganizationTreeNodeDTO> nodes = mapperUtil.convertToTreeNodeDtos(organizationDTOS);
 
         return buildTree(nodes);
     }
@@ -287,7 +290,7 @@ public class OrganizationService {
      */
     public List<OrganizationTreeNodeDTO> getFullOrganizationTree() {
         List<OrganizationDTO> organizations = this.findAll();
-        List<OrganizationTreeNodeDTO> nodes = convertToTreeNodeDtos(organizations);
+        List<OrganizationTreeNodeDTO> nodes = mapperUtil.convertToTreeNodeDtos(organizations);
 
         return buildTree(nodes);
     }
@@ -306,7 +309,7 @@ public class OrganizationService {
         Organization updatedOrganization = optionalOrg.get();
         updatedOrganization.setName(organizationDTO.getName());
         updatedOrganization.setEnabled(organizationDTO.getEnabled());
-        return convertToDto(organizationRepository.save(updatedOrganization));
+        return mapperUtil.convertToDto(organizationRepository.save(updatedOrganization));
     }
 
     /**
@@ -330,7 +333,7 @@ public class OrganizationService {
         List<OrganizationDTO> orgDtos = new ArrayList<>();
         List<Organization> orgs = organizationRepository.findAllByOrderByPathAsc();
         for (Organization o: orgs) {
-            orgDtos.add(convertToDto(o));
+            orgDtos.add(mapperUtil.convertToDto(o));
         }
 
         return orgDtos;
@@ -350,54 +353,6 @@ public class OrganizationService {
             throw new NoSuchElementException();
         }
         return optionalOrg.get();
-    }
-
-    /**
-     * Converts an organization to an organization dto.
-     *
-     * @param organization the organization to convert.
-     * @return the corresponding user entity dto.
-     */
-    private OrganizationDTO convertToDto(Organization organization) {
-        OrganizationDTO organizationDTO = modelMapper.map(organization, OrganizationDTO.class);
-
-        // Do something else if needed..?
-
-        return organizationDTO;
-    }
-
-    /**
-     * Converts an organization dto to an organization entity.
-     *
-     * @param organizationDto the organization dto to convert.
-     * @return the corresponding organization entity.
-     */
-    private Organization convertToEntity(OrganizationDTO organizationDto) throws ParseException {
-        Organization organization = modelMapper.map(organizationDto, Organization.class);
-
-        // Do something else if needed..?
-
-        return organization;
-    }
-
-    /**
-     * Converts a organization dtos to a organization tree node dtos.
-     *
-     * @param organizations the organizations to be converted.
-     * @return the corresponding organization tree node dtos.
-     */
-    private List<OrganizationTreeNodeDTO> convertToTreeNodeDtos(List<OrganizationDTO> organizations) {
-        List<OrganizationTreeNodeDTO> nodes = new ArrayList<>();
-
-        for (OrganizationDTO o: organizations) {
-            OrganizationTreeNodeDTO n = new OrganizationTreeNodeDTO();
-            n.setId(o.getId());
-            n.setName(o.getName());
-            n.setPath(o.getPath());
-            n.setEnabled(o.getEnabled());
-            nodes.add(n);
-        }
-        return nodes;
     }
 
     /**

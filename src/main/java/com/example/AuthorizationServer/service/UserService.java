@@ -7,10 +7,9 @@ import com.example.AuthorizationServer.bo.entity.Organization;
 import com.example.AuthorizationServer.bo.entity.UserEntity;
 import com.example.AuthorizationServer.repository.OrganizationRepository;
 import com.example.AuthorizationServer.repository.UserEntityRepository;
+import com.example.AuthorizationServer.utility.MapperUtil;
 import com.example.AuthorizationServer.utility.UserEntityDTOComparator;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.expression.ParseException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.common.exceptions.UnauthorizedUserException;
@@ -29,17 +28,28 @@ import java.util.*;
 @Transactional
 public class UserService {
 
-    @Autowired
-    private UserEntityRepository userEntityRepository;
+    private final UserEntityRepository userEntityRepository;
+
+    private final OrganizationRepository orgRepository;
+
+    private final OrganizationService orgService;
+
+    private final MapperUtil mapperUtil;
+
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Autowired
-    private OrganizationRepository orgRepository;
+    public UserService(UserEntityRepository userEntityRepository, OrganizationRepository orgRepository, OrganizationService orgService, MapperUtil mapperUtil) {
+        this.userEntityRepository = userEntityRepository;
+        this.orgRepository = orgRepository;
+        this.orgService = orgService;
+        this.mapperUtil = mapperUtil;
+    }
 
     @Autowired
-    private OrganizationService orgService;
-
-    @Autowired
-    private ModelMapper modelMapper = new ModelMapper();
+    public void setbCryptPasswordEncoder(BCryptPasswordEncoder bCryptPasswordEncoder) {
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+    }
 
     /**
      * Fetches a user entity dto from username.
@@ -67,7 +77,7 @@ public class UserService {
         if (!optionalUserEntity.isPresent()) {
             throw new EntityNotFoundException();
         }
-        return convertUserEntityToDto(optionalUserEntity.get());
+        return mapperUtil.convertUserEntityToDto(optionalUserEntity.get());
     }
 
     /**
@@ -86,7 +96,7 @@ public class UserService {
         List<UserEntityDTO> userEntityDTOS = new ArrayList<>();
 
         for (UserEntity u: userEntities) {
-            userEntityDTOS.add(convertUserEntityToDto(u));
+            userEntityDTOS.add(mapperUtil.convertUserEntityToDto(u));
         }
 
         return userEntityDTOS;
@@ -102,10 +112,10 @@ public class UserService {
     public UserEntityDTO addUser(String role, UserEntityExtendedDTO userEntityDTO) {
         if (!userEntityDTO.getRole().equals(role))
             throw new UnauthorizedUserException("Not authorized to create a new user with this role");
-        userEntityDTO.setPassword(new BCryptPasswordEncoder().encode(userEntityDTO.getPassword()));
+        userEntityDTO.setPassword(bCryptPasswordEncoder.encode(userEntityDTO.getPassword()));
         if(userEntityDTO.getOrganizations() == null)
             userEntityDTO.setOrganizations(new HashSet<>());
-        return convertUserEntityToDto(userEntityRepository.save(convertToEntity(userEntityDTO)));
+        return mapperUtil.convertUserEntityToDto(userEntityRepository.save(mapperUtil.convertToEntity(userEntityDTO)));
     }
 
     /**
@@ -118,33 +128,11 @@ public class UserService {
         List<UserEntity> userEntities = new ArrayList<>();
 
         for (UserEntityExtendedDTO u: userEntityDTOS) {
-            UserEntity userEntity = convertToEntity(u);
-            userEntity.setPassword(new BCryptPasswordEncoder().encode(userEntity.getPassword()));
+            UserEntity userEntity = mapperUtil.convertToEntity(u);
+            userEntity.setPassword(bCryptPasswordEncoder.encode(userEntity.getPassword()));
             userEntities.add(userEntity);
         }
         userEntityRepository.saveAll(userEntities);
-    }
-
-    // JUST FOR SEEDING - REMOVE LATER!!
-    public UserEntity addUser(UserEntity userEntity) {
-        userEntity.setPassword(new BCryptPasswordEncoder().encode(userEntity.getPassword()));
-        return userEntityRepository.save(userEntity);
-    }
-
-    // JUST FOR SEEDING - REMOVE LATER!!
-    public UserEntity updateUser(String role, Long id, UserEntity userEntity) {
-        Optional<UserEntity> optionalUser = userEntityRepository.findByRoleAndId(role, id);
-        if (!optionalUser.isPresent())
-            throw new NoSuchElementException(); // ?
-        UserEntity updatedUserEntity = optionalUser.get();
-        updatedUserEntity.setUsername(userEntity.getUsername());
-        updatedUserEntity.setFirstname(userEntity.getFirstname());
-        updatedUserEntity.setLastname(userEntity.getLastname());
-        updatedUserEntity.setPassword(userEntity.getPassword());
-        updatedUserEntity.setRole(userEntity.getRole());
-        updatedUserEntity.setEnabled(userEntity.getEnabled());
-        updatedUserEntity.setOrganizations(userEntity.getOrganizations());
-        return userEntityRepository.save(updatedUserEntity);
     }
 
     /**
@@ -170,19 +158,19 @@ public class UserService {
         if(!userEntityDTO.getLastname().equals(""))
             updatedUserEntity.setLastname(userEntityDTO.getLastname());
         if(!userEntityDTO.getPassword().equals(""))
-            updatedUserEntity.setPassword(new BCryptPasswordEncoder().encode(userEntityDTO.getPassword()));
+            updatedUserEntity.setPassword(bCryptPasswordEncoder.encode(userEntityDTO.getPassword()));
         // System does not allow for changing role of user
         if(userEntityDTO.getEnabled() != null)
             updatedUserEntity.setEnabled(userEntityDTO.getEnabled());
         if(userEntityDTO.getOrganizations() != null) {
             Set<Organization> organizations = new HashSet<>();
             for (OrganizationDTO o : userEntityDTO.getOrganizations()) {
-                organizations.add(convertToEntity(o));
+                organizations.add(mapperUtil.convertToEntity(o));
             }
             updatedUserEntity.setOrganizations(organizations);
         }
 
-        return convertUserEntityToDto(userEntityRepository.save(updatedUserEntity));
+        return mapperUtil.convertUserEntityToDto(userEntityRepository.save(updatedUserEntity));
     }
 
     /**
@@ -213,7 +201,7 @@ public class UserService {
                 "USER", true);
         List<UserEntityDTO> resultDTOs = new ArrayList<>();
         for (UserEntity u: result) {
-            resultDTOs.add(convertUserEntityToDto(u));
+            resultDTOs.add(mapperUtil.convertUserEntityToDto(u));
         }
         return resultDTOs;
     }
@@ -291,86 +279,4 @@ public class UserService {
 
         return result;
     }
-
-    /**
-     * Converts a user entity and its organization entity memberships into a user entity dto with organization dto
-     * memberships.
-     * @param userEntity the user entity to convert
-     * @return the corresponding user entity dto
-     */
-    private UserEntityDTO convertUserEntityToDto(UserEntity userEntity) {
-        Set<OrganizationDTO> orgDtos = new HashSet<>();
-
-        for (Organization o: userEntity.getOrganizations()) {
-            orgDtos.add(convertToDto(o));
-        }
-
-        UserEntityDTO userEntityDTO = convertToDto(userEntity);
-        userEntityDTO.setOrganizations(orgDtos);
-
-        return userEntityDTO;
-    }
-
-    /**
-     * Convert user entity to user entity dto excluding organization memberships
-     * @param userEntity the user entity to convert
-     * @return the corresponding user entity dto
-     */
-    private UserEntityDTO convertToDto(UserEntity userEntity) {
-        UserEntityDTO userEntityDTO = modelMapper.map(userEntity, UserEntityDTO.class);
-
-        // Do something else if needed..?
-
-        return userEntityDTO;
-    }
-
-    /**
-     * Convert user entity dto to user entity
-     * @param userEntityDto the user entity dto to convert
-     * @return the corresponding user entity
-     */
-    private UserEntity convertToEntity(UserEntityDTO userEntityDto) throws ParseException {
-        UserEntity newUser = modelMapper.map(userEntityDto, UserEntity.class);
-        Optional<UserEntity> user = this.getUserById(userEntityDto.getId());
-        return user.orElse(null);
-    }
-
-    /**
-     * Convert organization to organization dto
-     * @param organization the organization to convert
-     * @return the corresponding user entity dto
-     */
-    private OrganizationDTO convertToDto(Organization organization) {
-        OrganizationDTO organizationDTO = modelMapper.map(organization, OrganizationDTO.class);
-
-        // Do something else if needed..?
-
-        return organizationDTO;
-    }
-
-    /**
-     * Convert user entity dto to user entity
-     * @param organizationDto the user entity dto to convert
-     * @return the corresponding user entity
-     */
-    private Organization convertToEntity(OrganizationDTO organizationDto) throws ParseException {
-        Organization organization = modelMapper.map(organizationDto, Organization.class);
-
-        // Do something else if needed..?
-
-        return organization;
-    }
-
-    /**
-     * Convert user entity dto to user entity
-     * @param userEntityDto the user entity dto to convert
-     * @return the corresponding user entity
-     */
-    private UserEntity convertToEntity(UserEntityExtendedDTO userEntityDto) throws ParseException {
-        UserEntity newUser = modelMapper.map(userEntityDto, UserEntity.class);
-        /*Optional<UserEntity> user = this.getUserById(userEntityDto.getId());
-        return user.orElse(null);*/
-        return newUser;
-    }
-
 }
