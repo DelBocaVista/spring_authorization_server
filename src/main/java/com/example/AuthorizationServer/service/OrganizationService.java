@@ -32,25 +32,21 @@ public class OrganizationService {
     @Autowired
     private ModelMapper modelMapper = new ModelMapper();
 
-    public OrganizationDTO getOrganizationDTOById(Long id) {
-        return convertToDto(this.getOrganizationById(id));
+    /**
+     * Fetches an organization dto from id.
+     *
+     * @param id the id of the organization dto.
+     * @return the organization dto.
+     */
+    public OrganizationDTO getOrganizationById(Long id) {
+        return convertToDto(this.getOrganizationEntityById(id));
     }
 
-    // JUST FOR SEEDING - REMOVE LATER!!
-    public Organization getOrganizationByIdSeed(Long id) {
-        return this.getOrganizationById(id);
-    }
-
-    private Organization getOrganizationById(Long id) {
-        logger.info("Fetching Organization with id {}", id);
-        Optional<Organization> optionalOrg = organizationRepository.findById(id);
-        if (!optionalOrg.isPresent()) {
-            logger.error("Organization with id {} not found.", id);
-            throw new NoSuchElementException();
-        }
-        return optionalOrg.get();
-    }
-
+    /**
+     * Fetches an organization dto from name.
+     * @param name the name of the organization dto.
+     * @return the organization dto.
+     */
     public OrganizationDTO getOrganizationByName(String name) {
         Optional<Organization> optionalOrg = organizationRepository.findByName(name);
         if (!optionalOrg.isPresent())
@@ -58,13 +54,12 @@ public class OrganizationService {
         return convertToDto(optionalOrg.get());
     }
 
-    public String getPathByName(String name) {
-        Optional<Organization> optionalOrg = organizationRepository.findByName(name);
-        if (!optionalOrg.isPresent())
-            throw new NoSuchElementException(); // ?
-        return optionalOrg.get().getPath();
-    }
-
+    /**
+     * Create a new organization.
+     *
+     * @param org the organization dto of the organization.
+     * @return the organization dto representing the new organization.
+     */
     public OrganizationDTO addOrganization(OrganizationDTO org) {
         Organization returnedOrg = organizationRepository.save(convertToEntity(org));
         returnedOrg.setPath("");
@@ -74,29 +69,40 @@ public class OrganizationService {
         return convertToDto(organizationRepository.save(orgInDb));
     }
 
-    // JUST FOR SEEDING - REMOVE LATER!!
-    public Organization addOrganizationSeed(Organization org) {
-        Organization returnedOrg = organizationRepository.save(org);
-        returnedOrg.setPath("");
-        Optional<Organization> optionalOrg = organizationRepository.findByName(returnedOrg.getName());
-        Organization orgInDb = optionalOrg.get();
-        orgInDb.setParent(orgInDb);
-        return organizationRepository.save(orgInDb);
-    }
-
+    /**
+     * Sets an organization as the parent of another organization.
+     *
+     * @param childId the id of the intended child organization.
+     * @param parentId the id of the intended parent organization.
+     * @return the organization dto representing the updated child organization.
+     */
     public OrganizationDTO addParentToOrganization(Long childId, Long parentId) {
-        Organization child = this.getOrganizationById(childId);
-        Organization parent = this.getOrganizationById(parentId);
+        Organization child = this.getOrganizationEntityById(childId);
+        Organization parent = this.getOrganizationEntityById(parentId);
         return this.addParentToOrganization(child, parent);
     }
 
+    /**
+     * Sets an organization as the parent of another organization.
+     *
+     * @param childDto the dto version of the intended child organization.
+     * @param parentId the id of the intended parent organization.
+     * @return the organization dto representing the updated child organization.
+     */
     public OrganizationDTO addParentToOrganization(OrganizationDTO childDto, Long parentId) {
-        Organization parent = this.getOrganizationById(parentId);
+        Organization parent = this.getOrganizationEntityById(parentId);
         Organization child = convertToEntity(childDto);
         Organization childInDb = organizationRepository.save(child);
         return this.addParentToOrganization(childInDb, parent);
     }
 
+    /**
+     * Sets an organization as the parent of another organization.
+     *
+     * @param child the intended child organization.
+     * @param parent the intended parent organization.
+     * @return the organization dto representing the updated child organization.
+     */
     public OrganizationDTO addParentToOrganization(Organization child, Organization parent) {
         Optional<Organization> optionalChild = organizationRepository.findByName(child.getName());
         Optional<Organization> optionalParent = organizationRepository.findByName(parent.getName());
@@ -108,18 +114,8 @@ public class OrganizationService {
         return convertToDto(organizationRepository.save(childInDb));
     }
 
-    public List<OrganizationDTO> getAllRootParentOrganizations() {
-        // Only root parent organizations has just one id in path and therefore also no "." delimiter.
-        List<Organization> result = organizationRepository.findByPathNotContaining(".");
-        List<OrganizationDTO> resultDTO = new ArrayList<>();
-        for (Organization o: result) {
-            resultDTO.add(convertToDto(o));
-        }
-        return resultDTO;
-    }
-
     /**
-     * Returns all the sub organizations of a given parent.
+     * Fetches all the sub organizations of a given parent.
      *
      * @param parentId the id of the parent organization.
      * @return the sub organizations of the parent.
@@ -129,9 +125,9 @@ public class OrganizationService {
         if (!optionalParent.isPresent())
             throw new NoSuchElementException(); // ?
         Organization parentInDB = optionalParent.get();
+
         List<Organization> orgs = organizationRepository.findByPathStartsWith(parentInDB.getPath());
-        if(orgs.contains(parentInDB))
-            orgs.remove(parentInDB);
+        orgs.remove(parentInDB);
 
         List<OrganizationDTO> orgDtos = new ArrayList<>();
         for (Organization o: orgs) {
@@ -140,35 +136,22 @@ public class OrganizationService {
         return orgDtos;
     }
 
-    public List<OrganizationDTO> getDirectChildrenOfOrganization(OrganizationDTO parent) {
-        Optional<Organization> optionalParent = organizationRepository.findByName(parent.getName());
-        if (!optionalParent.isPresent())
-            throw new NoSuchElementException(); // ?
-        Organization parentInDB = optionalParent.get();
-        List<Organization> orgs = organizationRepository.findByPathContains(parentInDB.getId().toString());
-        List<OrganizationDTO> result = new ArrayList<>();
-        for (Organization o: orgs) {
-            String[] path = o.getPath().split("\\.");
-            if (path.length == 2)
-                result.add(convertToDto(o));
-        }
-        return result;
-    }
-
+    /**
+     * Fetches all organizations.
+     *
+     * @return the organizations found.
+     */
     public List<OrganizationDTO> getAllOrganizations() {
         return this.findAll();
     }
 
-    private List<OrganizationDTO> findAll() {
-        List<OrganizationDTO> orgDtos = new ArrayList<>();
-        List<Organization> orgs = organizationRepository.findAllByOrderByPathAsc();
-        for (Organization o: orgs) {
-            orgDtos.add(convertToDto(o));
-        }
-
-        return orgDtos;
-    }
-
+    /**
+     * Checks if an organization is a child of another organization.
+     *
+     * @param childId the id of the child organization.
+     * @param parentId the id of the parent organization.
+     * @return true if the organization is a child of the parent otherwise false.
+     */
     public boolean isOrganizationChildOfRootParent(Long childId, Long parentId) {
         Optional<Organization> optionalChild = organizationRepository.findById(childId);
         if(!optionalChild.isPresent())
@@ -190,6 +173,11 @@ public class OrganizationService {
         return false;
     }
 
+    /**
+     * Fetches all root organizations.
+     *
+     * @return the root organizations found.
+     */
     public List<OrganizationDTO> getAllRootOrganizations() {
         List<OrganizationDTO> organizationDTOS = this.getAllOrganizations();
         List<OrganizationDTO> result = new ArrayList<>();
@@ -201,6 +189,12 @@ public class OrganizationService {
         return result;
     }
 
+    /**
+     * Checks if an organization is a root organization.
+     *
+     * @param id the id of the organization.
+     * @return true if the organization is a root organization otherwise false.
+     */
     public boolean isRootOrganization(Long id) {
         Optional<Organization> optionalOrganization = organizationRepository.findById(id);
         if(!optionalOrganization.isPresent())
@@ -215,6 +209,12 @@ public class OrganizationService {
         return true;
     }
 
+    /**
+     * Fetches the root organization that a given organization belongs to.
+     *
+     * @param id the id of the organization.
+     * @return the root organization.
+     */
     public OrganizationDTO getRootParentOfOrganization(Long id) {
         Optional<Organization> optionalOrganization = organizationRepository.findById(id);
         if(!optionalOrganization.isPresent())
@@ -228,42 +228,165 @@ public class OrganizationService {
         return convertToDto(rootParent);
     }
 
-    // Fix so that 1 and 10 doesnt get mixed up..
+    /**
+     * Fetches the sub tree of organizations with a given organization as root.
+     *
+     * @param id the id of the sub tree root organization.
+     * @return the sub tree represented as a sorted list.
+     */
     public List<OrganizationTreeNodeDTO> getOrganizationSubTree(Long id) {
+
         List<Organization> organizations = organizationRepository.findByPathContainsOrderByPathAsc(id.toString());
         List<OrganizationDTO> organizationDTOS = new ArrayList<>();
 
-        // Because of ascending sorting, the first item in organizations will be node with given id
+        // Because of ascending sorting in list, the first item in organizations will be node with given id
         String[] pathArray = organizations.get(0).getPath().split("\\.");
+
         for (Organization o: organizations) {
+
             OrganizationDTO dto = convertToDto(o);
-            if(pathArray.length > 1) {
-                // Path does not start with given id
+            String[] orgPathArray = dto.getPath().split("\\.");
+
+            // Result of the "contains" query could possibly contain unwanted organization
+            if (pathArray.length > 1) {
+                // Path contains more than one entry so it does not start with the given id..
+                // ..therefore we need to trim the path so that it does
+
                 String path = o.getPath();
+
+                // Assume that the organization does not have the given id..
                 String match = "." + id + ".";
-                if(o.getId().equals(id))
+                // ..but adjust match string if it does
+                if (o.getId().equals(id))
                     match = "." + id;
-                String newPath = path.substring(path.indexOf(match));
-                dto.setPath(newPath.substring(1));
-                organizationDTOS.add(dto);
+
+                int matchPosition = path.indexOf(match);
+                if (matchPosition > -1) {
+                    // Match found so organization belongs in sub tree
+                    String newPath = path.substring(matchPosition);
+                    dto.setPath(newPath.substring(1));
+                    organizationDTOS.add(dto);
+                }
             } else {
-                organizationDTOS.add(convertToDto(o));
+                // Path starts with given id..
+                // ..so organization belongs to sub tree if the root id matches the given id
+                if (orgPathArray[0].equals(id.toString()))
+                    organizationDTOS.add(dto);
             }
         }
 
-        List<OrganizationTreeNodeDTO> nodes = convertToTreeNodeDto(organizationDTOS);
+        List<OrganizationTreeNodeDTO> nodes = convertToTreeNodeDtos(organizationDTOS);
 
         return buildTree(nodes);
     }
 
+    /**
+     * Fetches the organization tree structures of all organization currently in the system.
+     *
+     * @return the tree structures.
+     */
     public List<OrganizationTreeNodeDTO> getFullOrganizationTree() {
         List<OrganizationDTO> organizations = this.findAll();
-        List<OrganizationTreeNodeDTO> nodes = convertToTreeNodeDto(organizations);
+        List<OrganizationTreeNodeDTO> nodes = convertToTreeNodeDtos(organizations);
 
         return buildTree(nodes);
     }
 
-    private List<OrganizationTreeNodeDTO> convertToTreeNodeDto(List<OrganizationDTO> organizations) {
+    /**
+     * Updates an existing organization.
+     *
+     * @param id the id of the organization to be updated.
+     * @param organizationDTO the updated organization dto version of the organization to be updated.
+     * @return the organization dto representing the updated organization.
+     */
+    public OrganizationDTO updateOrganization(Long id, OrganizationDTO organizationDTO) {
+        Optional<Organization> optionalOrg = organizationRepository.findById(id);
+        if (!optionalOrg.isPresent())
+            throw new NoSuchElementException(); // ?
+        Organization updatedOrganization = optionalOrg.get();
+        updatedOrganization.setName(organizationDTO.getName());
+        updatedOrganization.setEnabled(organizationDTO.getEnabled());
+        return convertToDto(organizationRepository.save(updatedOrganization));
+    }
+
+    /**
+     * Deletes an organization.
+     *
+     * @param id the id of the organization to be deleted.
+     */
+    public void deleteOrganization(Long id) {
+        Optional<Organization> optionalOrg = organizationRepository.findById(id);
+        if (!optionalOrg.isPresent())
+            throw new NoSuchElementException();
+        organizationRepository.deleteById(id);
+    }
+
+    /**
+     * Finds all available organizations.
+     *
+     * @return the organizations found.
+     */
+    private List<OrganizationDTO> findAll() {
+        List<OrganizationDTO> orgDtos = new ArrayList<>();
+        List<Organization> orgs = organizationRepository.findAllByOrderByPathAsc();
+        for (Organization o: orgs) {
+            orgDtos.add(convertToDto(o));
+        }
+
+        return orgDtos;
+    }
+
+    /**
+     * Fetches an organization from id.
+     *
+     * @param id the id of the organization.
+     * @return the organization.
+     */
+    private Organization getOrganizationEntityById(Long id) {
+        logger.info("Fetching Organization with id {}", id);
+        Optional<Organization> optionalOrg = organizationRepository.findById(id);
+        if (!optionalOrg.isPresent()) {
+            logger.error("Organization with id {} not found.", id);
+            throw new NoSuchElementException();
+        }
+        return optionalOrg.get();
+    }
+
+    /**
+     * Converts an organization to an organization dto.
+     *
+     * @param organization the organization to convert.
+     * @return the corresponding user entity dto.
+     */
+    private OrganizationDTO convertToDto(Organization organization) {
+        OrganizationDTO organizationDTO = modelMapper.map(organization, OrganizationDTO.class);
+
+        // Do something else if needed..?
+
+        return organizationDTO;
+    }
+
+    /**
+     * Converts an organization dto to an organization entity.
+     *
+     * @param organizationDto the organization dto to convert.
+     * @return the corresponding organization entity.
+     */
+    private Organization convertToEntity(OrganizationDTO organizationDto) throws ParseException {
+        Organization organization = modelMapper.map(organizationDto, Organization.class);
+
+        // Do something else if needed..?
+
+        return organization;
+    }
+
+    /**
+     * Converts a organization dtos to a organization tree node dtos.
+     *
+     * @param organizations the organizations to be converted.
+     * @return the corresponding organization tree node dtos.
+     */
+    private List<OrganizationTreeNodeDTO> convertToTreeNodeDtos(List<OrganizationDTO> organizations) {
         List<OrganizationTreeNodeDTO> nodes = new ArrayList<>();
 
         for (OrganizationDTO o: organizations) {
@@ -277,105 +400,34 @@ public class OrganizationService {
         return nodes;
     }
 
-    public void changeParentOfOrganization(Long id, Long newParentId) {
-
-        // NEEDS TO CHECK IF BOTH id AND newParentId are in the same organization!!!
-
-        // Get organization and the new parent
-        Optional<Organization> optionalOrg = organizationRepository.findById(id);
-        if (!optionalOrg.isPresent())
-            throw new NoSuchElementException();
-
-        Optional<Organization> optionalNewParent = organizationRepository.findById(newParentId);
-        if (!optionalNewParent.isPresent())
-            throw new NoSuchElementException();
-
-        Organization org = optionalOrg.get();
-        Organization newParent = optionalNewParent.get();
-
-        // Previous path of the organization and current parent
-        String[] orgPath = org.getPath().split("\\.");
-
-        if (orgPath.length <= 1)
-            throw new IllegalArgumentException("Root organizations can not be changed into sub organizations");
-
-        // Get all organizations whom are related to the organization
-        List<Organization> allRelated = organizationRepository.findByPathContains(org.getId().toString());
-
-        // organization already has a parent - replace path of parent with path of new parent
-        String prevFullPath = org.getPath();
-        String prevParentsOfOrg = prevFullPath.substring(0,prevFullPath.indexOf("." + org.getId()));
-        System.out.println("prevP " + prevParentsOfOrg);
-
-        for (Organization o : allRelated) {
-            String s = o.getId() + " " + o.getPath();
-            o.setPath(o.getPath().replace(prevParentsOfOrg, newParent.getPath()));
-            System.out.println(s + " " + o.getPath());
-        }
-
-        organizationRepository.saveAll(allRelated);
-    }
-
-    public OrganizationDTO updateOrganization(Long id, OrganizationDTO organizationDTO) {
-        Optional<Organization> optionalOrg = organizationRepository.findById(id);
-        if (!optionalOrg.isPresent())
-            throw new NoSuchElementException(); // ?
-        Organization updatedOrganization = optionalOrg.get();
-        updatedOrganization.setName(organizationDTO.getName());
-        updatedOrganization.setEnabled(organizationDTO.getEnabled());
-        return convertToDto(organizationRepository.save(updatedOrganization));
-    }
-
-    public void deleteOrganization(Long id) {
-        Optional<Organization> optionalOrg = organizationRepository.findById(id);
-        if (!optionalOrg.isPresent())
-            throw new NoSuchElementException();
-        organizationRepository.deleteById(id);
-    }
-
     /**
-     * Convert organization to organization dto
-     * @param organization the organization to convert
-     * @return the corresponding user entity dto
+     * Builds organization tree structures consisting of linked organization tree nodes.
+     *
+     * @param nodes the organization tree node dtos to build the tree structures from.
+     * @return the tree structures.
      */
-    private OrganizationDTO convertToDto(Organization organization) {
-        OrganizationDTO organizationDTO = modelMapper.map(organization, OrganizationDTO.class);
-
-        // Do something else if needed..?
-
-        return organizationDTO;
-    }
-
-    /**
-     * Convert organization dto to organization entity
-     * @param organizationDto the organization dto to convert
-     * @return the corresponding organization entity
-     */
-    private Organization convertToEntity(OrganizationDTO organizationDto) throws ParseException {
-        Organization organization = modelMapper.map(organizationDto, Organization.class);
-
-        // Do something else if needed..?
-
-        return organization;
-    }
-
     private static List<OrganizationTreeNodeDTO> buildTree(List<OrganizationTreeNodeDTO> nodes) {
+
         HashMap<String, OrganizationTreeNodeDTO> map = new HashMap<>();
+
         for (OrganizationTreeNodeDTO n: nodes) {
             map.put(n.getId().toString(), n);
         }
+
         List<OrganizationTreeNodeDTO> tree = new ArrayList<>();
+
         for (OrganizationTreeNodeDTO n: nodes) {
             String[] path = n.getPath().split("\\.");
             if (path.length == 1) {
                 tree.add(n);
             } else {
-                // find nearest parent
+                // find nearest parent, i.e. the second to last organization id in the path
                 OrganizationTreeNodeDTO parent = map.get(path[path.length - 2]);
                 // add self as child
                 parent.addSubOrganization(n);
             }
         }
+
         return tree;
     }
 }
