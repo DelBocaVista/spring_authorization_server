@@ -32,11 +32,15 @@ public class AdminController {
     // Superadmin is only authorized to handle user entities with admin role
     private final String role = "ADMIN";
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+
+    private final OrganizationService orgService;
 
     @Autowired
-    private OrganizationService orgService;
+    public AdminController(UserService userService, OrganizationService orgService) {
+        this.userService = userService;
+        this.orgService = orgService;
+    }
 
     /**
      * Retrieve all admins.

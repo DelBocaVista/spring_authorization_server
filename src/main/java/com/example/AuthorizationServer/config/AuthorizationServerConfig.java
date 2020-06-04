@@ -19,24 +19,37 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
+/**
+ * @author Jonas Fredén-Lundvall (jonlundv@kth.se)
+ */
 @Configuration
 @EnableAuthorizationServer
 public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    private final AuthenticationManager authenticationManager;
+
+    private final CustomUserDetailsService customUserDetailsService;
+
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Autowired
-    CustomUserDetailsService customUserDetailsService;
+    public AuthorizationServerConfig(AuthenticationManager authenticationManager, CustomUserDetailsService customUserDetailsService, BCryptPasswordEncoder bCryptPasswordEncoder) {
+        this.authenticationManager = authenticationManager;
+        this.customUserDetailsService = customUserDetailsService;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+    }
 
-    @Autowired
-    BCryptPasswordEncoder bCryptPasswordEncoder;
-
+    /**
+     * {@inheritDoc}
+     */
     @Bean
     public TokenStore tokenStore(){
         return new JwtTokenStore(accessTokenConverter());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Bean
     public JwtAccessTokenConverter accessTokenConverter() {
         CustomTokenConverter tokenConverter = new CustomTokenConverter();
@@ -44,26 +57,31 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
         return tokenConverter;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void configure(final AuthorizationServerSecurityConfigurer security) throws Exception {
+    public void configure(final AuthorizationServerSecurityConfigurer security) {
         security.tokenKeyAccess("permitAll()").checkTokenAccess("isAuthenticated()");
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
-        //config.applyPermitDefaultValues();
         config.setAllowCredentials(true);
+        // Change this to match your setup in production.
         config.addAllowedOrigin("*");
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
 
-        // ADDED THIS TO ALLOW CORS!!!!
-
-        //source.registerCorsConfiguration("/oauth/token", config);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
+
         CorsFilter filter = new CorsFilter(source);
+
         security.addTokenEndpointAuthenticationFilter(filter);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
         clients.inMemory()
@@ -71,12 +89,15 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
                 .authorizedGrantTypes("password", "authorization_code", "refresh_token").scopes("read","write")
                 .authorities("USER","ADMIN","SUPERADMIN")
                 .autoApprove(true)
-                .accessTokenValiditySeconds(180)//Access token is valid for 3 minutes.
-                .refreshTokenValiditySeconds(600);//Refresh token is valid for 10 minutes.
+                .accessTokenValiditySeconds(180) // Access token is valid for 3 minutes.
+                .refreshTokenValiditySeconds(600); // Refresh token is valid for 10 minutes.
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void configure(final AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
+    public void configure(final AuthorizationServerEndpointsConfigurer endpoints) {
         endpoints
                 .tokenStore(tokenStore())
                 .authenticationManager(authenticationManager)
