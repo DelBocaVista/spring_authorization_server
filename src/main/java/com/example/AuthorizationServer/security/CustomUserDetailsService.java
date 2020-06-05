@@ -2,7 +2,7 @@ package com.example.AuthorizationServer.security;
 
 import com.example.AuthorizationServer.bo.dto.OrganizationDTO;
 import com.example.AuthorizationServer.bo.entity.Organization;
-import com.example.AuthorizationServer.bo.entity.UserEntity;
+import com.example.AuthorizationServer.bo.entity.User;
 import com.example.AuthorizationServer.service.UserService;
 import com.example.AuthorizationServer.utility.MapperUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,16 +42,16 @@ public class CustomUserDetailsService implements UserDetailsService {
      */
     @Override
     public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
-        UserEntity userEntity = userService.getUserByUsername(userName);
-        GrantedAuthority authority = new SimpleGrantedAuthority(userEntity.getRole());
+        User user = userService.getUserByUsername(userName);
+        GrantedAuthority authority = new SimpleGrantedAuthority(user.getRole());
 
-        Set<Organization> organizations = userEntity.getOrganizations();
+        Set<Organization> organizations = user.getOrganizations();
         Set<OrganizationDTO> organizationDTOS = new HashSet<>();
         for (Organization o: organizations) {
             organizationDTOS.add(mapperUtil.convertToDto(o));
         }
 
-        return new CustomUserDetails(userEntity.getUsername(), userEntity.getPassword(), Arrays.asList(authority),
-                userEntity.getId(), organizationDTOS);
+        return new CustomUserDetails(user.getUsername(), user.getPassword(), Arrays.asList(authority),
+                user.getId(), organizationDTOS);
     }
 }

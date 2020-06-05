@@ -8,7 +8,7 @@ import java.util.Set;
 /**
  * @author Jonas Fredén-Lundvall (jonlundv@kth.se)
  *
- * Represents an Organization in the booking system to which Users and Rooms can belong
+ * Represents an organization in the booking system to which users and rooms can belong.
  */
 @Entity
 @Table(name = "organizations")
@@ -23,7 +23,7 @@ public class Organization implements Serializable {
     private Long id;
 
     @ManyToMany(mappedBy = "organizations", cascade=CascadeType.ALL)
-    private Set<UserEntity> userEntities = new HashSet<>();
+    private Set<User> users = new HashSet<>();
 
     @Column(name="org_name", unique = true)
     private String name;
@@ -35,8 +35,8 @@ public class Organization implements Serializable {
     private Boolean enabled;
 
     // Getters/setters ----------------------------------------------------------------------------
-    public Set<UserEntity> getUserEntities() { return userEntities; }
-    public void setUserEntities(Set<UserEntity> userEntities) { this.userEntities = userEntities; }
+    public Set<User> getUsers() { return users; }
+    public void setUsers(Set<User> users) { this.users = users; }
 
     public Boolean getEnabled() { return enabled; }
     public void setEnabled(Boolean enabled) { this.enabled = enabled; }
@@ -55,14 +55,14 @@ public class Organization implements Serializable {
         this.path = "";
     }
 
-    public Organization(Set<UserEntity> userEntities, String name, Boolean enabled) {
-        this.userEntities = userEntities;
+    public Organization(Set<User> users, String name, Boolean enabled) {
+        this.users = users;
         this.name = name;
         this.enabled = enabled;
     }
 
-    public Organization(Set<UserEntity> userEntities, String name) {
-        this.userEntities = userEntities;
+    public Organization(Set<User> users, String name) {
+        this.users = users;
         this.name = name;
         this.enabled = true;
     }
@@ -73,8 +73,8 @@ public class Organization implements Serializable {
         this.enabled = true;
     }
 
-    public void addUser(UserEntity userEntity) {
-        userEntities.add(userEntity);
+    public void addUser(User user) {
+        users.add(user);
     }
 
     public void setParent(Organization org) {

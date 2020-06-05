@@ -1,8 +1,8 @@
 package com.example.AuthorizationServer.controller;
 
 import com.example.AuthorizationServer.bo.dto.OrganizationDTO;
-import com.example.AuthorizationServer.bo.dto.UserEntityExtendedDTO;
-import com.example.AuthorizationServer.bo.dto.UserEntityDTO;
+import com.example.AuthorizationServer.bo.dto.UserDTO;
+import com.example.AuthorizationServer.bo.dto.UserExtendedDTO;
 import com.example.AuthorizationServer.security.CustomUserDetails;
 import com.example.AuthorizationServer.service.OrganizationService;
 import com.example.AuthorizationServer.service.UserService;
@@ -23,9 +23,9 @@ import java.util.*;
 /**
  * @author Jonas Fredén-Lundvall (jonlundv@kth.se), Gustav Kavtaradze (guek@kth.se), Erik Wikzén (wikzen@kth.se)
  *
- * Controller for REST API requests for user entities with user role. Only the admin role has access to this
- * resource. General access is upheld through http security configuration in ResourceServerConfig. Any endpoint specific
- * access rules are implemented in their respective methods.
+ * Controller for REST API requests for users with user role. Only the admin role has access to this resource. General
+ * access is upheld through http security configuration in ResourceServerConfig. Any endpoint specific access rules are
+ * implemented in their respective methods.
  */
 @SuppressWarnings("Duplicates")
 @RestController
@@ -34,7 +34,7 @@ public class UserController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
-    // Admin is only authorized to handle user entities with admin role
+    // Admin is only authorized to handle users with admin role
     private final String role = "USER";
 
     private final UserService userService;
@@ -48,10 +48,10 @@ public class UserController {
     }
 
     /**
-     * Retrieve all user entities with role user.
+     * Retrieve all users with role user.
      *
-     * @param limit the upper limit of how many user entities to retrieve.
-     * @param offset the offset for where in the ordered listing to start retrieving user entities.
+     * @param limit the upper limit of how many users to retrieve.
+     * @param offset the offset for where in the ordered listing to start retrieving users.
      * @return the response entity.
      */
     @GetMapping("/")
@@ -65,7 +65,7 @@ public class UserController {
             return new ResponseEntity<>("Unexpected error. Admin organization membership is invalid.", HttpStatus.BAD_REQUEST);
         }
 
-        List<UserEntityDTO> userEntities;
+        List<UserDTO> users;
 
         int getLimit = 20;
         int getOffset = 0;
@@ -78,20 +78,20 @@ public class UserController {
 
         // Admin is only authorized to fetch users with membership in sub organizations of its own root organization
         try {
-            userEntities = userService.getAllUsersByRootOrganization(adminOrganization.getId(), getLimit, getOffset);
+            users = userService.getAllUsersByRootOrganization(adminOrganization.getId(), getLimit, getOffset);
         } catch (Exception e) {
             logger.error(e.getMessage());
             return new ResponseEntity<>("Unexpected error. Organization not found.", HttpStatus.BAD_REQUEST);
         }
 
 
-        return new ResponseEntity<>(userEntities, HttpStatus.OK);
+        return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
     /**
-     * Retrieve a single user entity with user role by id.
+     * Retrieve a single users with user role by id.
      *
-     * @param id the user entity id.
+     * @param id the users id.
      * @return the response entity.
      */
     @GetMapping("/{id}")
@@ -105,12 +105,12 @@ public class UserController {
             return new ResponseEntity<>("Unexpected error. Admin organization membership is invalid.", HttpStatus.BAD_REQUEST);
         }
 
-        UserEntityDTO userEntityDTO;
+        UserDTO userDTO;
         try {
-            logger.info("Fetching UserEntity with id {}", id);
-            userEntityDTO = userService.getUserByRoleAndId(role, id);
+            logger.info("Fetching User with id {}", id);
+            userDTO = userService.getUserByRoleAndId(role, id);
         } catch (EntityNotFoundException e) {
-            logger.error("UserEntity with id {} and role {} not found.", id, role);
+            logger.error("User with id {} and role {} not found.", id, role);
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             logger.error(e.getMessage());
@@ -118,20 +118,20 @@ public class UserController {
         }
 
         // Admin can only fetch user with membership in sub organizations of its own root organization
-        if(!isUserMemberOfSubOrganizationOfRootOrganization(userEntityDTO, adminOrganization))
+        if(!isUserMemberOfSubOrganizationOfRootOrganization(userDTO, adminOrganization))
             return new ResponseEntity<>("Unexpected error. Not authorized to fetch user.", HttpStatus.UNAUTHORIZED);
 
-        return new ResponseEntity<>(userEntityDTO, HttpStatus.OK);
+        return new ResponseEntity<>(userDTO, HttpStatus.OK);
     }
 
     /**
-     * Create a user entity with user role.
+     * Create a user with user role.
      *
-     * @param userEntityDTO the user entity dto.
+     * @param userDTO the user dto.
      * @return the response entity.
      */
     @PostMapping("/")
-    public ResponseEntity<?> addUser(@RequestBody UserEntityExtendedDTO userEntityDTO) {
+    public ResponseEntity<?> addUser(@RequestBody UserExtendedDTO userDTO) {
         CustomUserDetails user = UserDetailExtractor.extract(SecurityContextHolder.getContext());
 
         OrganizationDTO adminOrganization;
@@ -142,30 +142,30 @@ public class UserController {
         }
 
         // Admin can only create user with membership in sub organizations of its own root organization
-        if(!isUserMemberOfSubOrganizationOfRootOrganization(userEntityDTO, adminOrganization))
+        if(!isUserMemberOfSubOrganizationOfRootOrganization(userDTO, adminOrganization))
             return new ResponseEntity<>("Unexpected error. Not authorized to create user.", HttpStatus.UNAUTHORIZED);
 
-        UserEntityDTO createdUserEntityDTO;
+        UserDTO createdUserDTO;
 
         try {
-            createdUserEntityDTO = userService.addUser(role, userEntityDTO);
+            createdUserDTO = userService.addUser(role, userDTO);
         } catch (Exception e) {
             logger.error(e.getMessage());
             return new ResponseEntity<>("Unexpected error. User is not valid.", HttpStatus.BAD_REQUEST);
         }
 
-        return new ResponseEntity<>(createdUserEntityDTO, HttpStatus.OK);
+        return new ResponseEntity<>(createdUserDTO, HttpStatus.OK);
     }
 
     /**
-     * Update a user entity with user role.
+     * Update a user with user role.
      *
-     * @param userEntityDTO the new version of the user entity dto.
-     * @param id the id of the user entity to be updated.
+     * @param userDTO the new version of the user dto.
+     * @param id the id of the user to be updated.
      * @return the response entity.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateUser(@RequestBody UserEntityExtendedDTO userEntityDTO, @PathVariable Long id) {
+    public ResponseEntity<?> updateUser(@RequestBody UserExtendedDTO userDTO, @PathVariable Long id) {
         CustomUserDetails user = UserDetailExtractor.extract(SecurityContextHolder.getContext());
 
         OrganizationDTO adminOrganization;
@@ -176,18 +176,18 @@ public class UserController {
         }
 
         // Admin can only update user with membership in sub organizations of its own root organization
-        if(!isUserMemberOfSubOrganizationOfRootOrganization(userEntityDTO, adminOrganization))
+        if(!isUserMemberOfSubOrganizationOfRootOrganization(userDTO, adminOrganization))
             return new ResponseEntity<>("Unexpected error. Not authorized to update user.", HttpStatus.UNAUTHORIZED);
 
-        UserEntityDTO updatedUserEntityDTO = userService.updateUser(role, id, userEntityDTO);
+        UserDTO updatedUserDTO = userService.updateUser(role, id, userDTO);
 
-        return new ResponseEntity<>(updatedUserEntityDTO, HttpStatus.OK);
+        return new ResponseEntity<>(updatedUserDTO, HttpStatus.OK);
     }
 
     /**
-     * Delete a user entity with user role.
+     * Delete a user with user role.
      *
-     * @param id the id of the user entity to be deleted.
+     * @param id the id of the user to be deleted.
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
@@ -200,7 +200,7 @@ public class UserController {
             return new ResponseEntity<>("Unexpected error. Admin organization membership is invalid.", HttpStatus.BAD_REQUEST);
         }
 
-        UserEntityDTO userToBeDeleted = userService.getUserByRoleAndId("USER", id);
+        UserDTO userToBeDeleted = userService.getUserByRoleAndId("USER", id);
 
         // Admin can only delete user with membership in sub organization of its own root organization
         if(!isUserMemberOfSubOrganizationOfRootOrganization(userToBeDeleted, adminOrganization))
@@ -218,11 +218,11 @@ public class UserController {
     /**
      * Create multiple users by JSON array.
      *
-     * @param userEntityExtendedDTOS the JSON array.
+     * @param userDTOS the JSON array.
      * @return the response entity.
      */
     @PostMapping("/upload/json/")
-    public ResponseEntity<?> createUsersFromJSONArray(@RequestBody List<UserEntityExtendedDTO> userEntityExtendedDTOS) {
+    public ResponseEntity<?> createUsersFromJSONArray(@RequestBody List<UserExtendedDTO> userDTOS) {
         CustomUserDetails user = UserDetailExtractor.extract(SecurityContextHolder.getContext());
 
         OrganizationDTO adminOrganization;
@@ -232,14 +232,14 @@ public class UserController {
             return new ResponseEntity<>("Unexpected error. Admin organization membership is invalid.", HttpStatus.BAD_REQUEST);
         }
 
-        for (UserEntityExtendedDTO u: userEntityExtendedDTOS) {
+        for (UserExtendedDTO u: userDTOS) {
             if (u.getRole().equals("USERS"))
                 return new ResponseEntity<>("Unexpected error. Not authorized to create other roles than user.", HttpStatus.UNAUTHORIZED);
             if(isUserMemberOfSubOrganizationOfRootOrganization(u, adminOrganization))
                 return new ResponseEntity<>("Unexpected error. Not authorized to create user in organization.", HttpStatus.UNAUTHORIZED);
         }
 
-        userService.addUsers(userEntityExtendedDTOS);
+        userService.addUsers(userDTOS);
         return new ResponseEntity<>("Successfully created users.", HttpStatus.OK);
     }
 
@@ -268,7 +268,7 @@ public class UserController {
 
             String line;
             String split = ",";
-            List<UserEntityExtendedDTO> userEntityDTOS = new ArrayList<>();
+            List<UserExtendedDTO> userDTOS = new ArrayList<>();
 
             line = br.readLine();
             String[] headersInFile = line.split(split);
@@ -289,13 +289,13 @@ public class UserController {
 
                 int i = 0;
 
-                UserEntityExtendedDTO userEntityDTO = new UserEntityExtendedDTO();
-                userEntityDTO.setFirstname(userArray[i++]);
-                userEntityDTO.setLastname(userArray[i++]);
-                userEntityDTO.setUsername(userArray[i++]);
-                userEntityDTO.setPassword(userArray[i++]);
-                userEntityDTO.setRole("USER");
-                userEntityDTO.setEnabled(new Boolean(userArray[i++]));
+                UserExtendedDTO userDTO = new UserExtendedDTO();
+                userDTO.setFirstname(userArray[i++]);
+                userDTO.setLastname(userArray[i++]);
+                userDTO.setUsername(userArray[i++]);
+                userDTO.setPassword(userArray[i++]);
+                userDTO.setRole("USER");
+                userDTO.setEnabled(new Boolean(userArray[i++]));
 
                 // All the following columns are expected to be names of existing organizations.
                 Set<OrganizationDTO> organizations = new HashSet<>();
@@ -322,12 +322,12 @@ public class UserController {
                     i++;
                 }
 
-                userEntityDTO.setOrganizations(organizations);
+                userDTO.setOrganizations(organizations);
 
-                userEntityDTOS.add(userEntityDTO);
+                userDTOS.add(userDTO);
             }
 
-            userService.addUsers(userEntityDTOS);
+            userService.addUsers(userDTOS);
 
         } catch (Exception e) {
             logger.error(e.getMessage());
@@ -340,11 +340,11 @@ public class UserController {
     /**
      * Helper method that evaluates whether a user is only member of sub organizations to a given root organization.
      *
-     * @param user the user entity.
+     * @param user the user.
      * @param root the root organization.
      * @return true if user is only member of sub organizations otherwise false.
      */
-    private boolean isUserMemberOfSubOrganizationOfRootOrganization(UserEntityDTO user, OrganizationDTO root) {
+    private boolean isUserMemberOfSubOrganizationOfRootOrganization(UserDTO user, OrganizationDTO root) {
         for (OrganizationDTO o: user.getOrganizations()) {
             if(!orgService.isOrganizationChildOfRootParent(o.getId(), root.getId()))
                 return false;
